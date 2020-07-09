@@ -1,0 +1,21 @@
+//
+//  ZWMainVideosCell.m
+//  KuaiZhu
+//
+//  Created by step_zhang on 2019/11/7.
+//  Copyright © 2019 su. All rights reserved.
+//
+
+#import "ZWMainVideosCell.h"
+
+@implementation ZWMainVideosCell
+
+- (void)awakeFromNib {
+    [super awakeFromNib];
+    // Initialization code
+    self.backgroundView.backgroundColor = [UIColor clearColor];
+//    self.BgImageView.layer.cornerRadius = 28/2;
+//    self.BgImageView.layer.masksToBounds = true;
+}
+
+@end

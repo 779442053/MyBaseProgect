@@ -1,0 +1,15 @@
+//
+//  MyCollecCell.h
+//  快猪
+//
+//  Created by layne on 2018/7/1.
+//  Copyright © 2018年 时磊. All rights reserved.
+//
+
+#import <UIKit/UIKit.h>
+
+@interface MyCollecCell : UICollectionViewCell
+@property (weak, nonatomic) IBOutlet UIImageView *bgImageView;
+@property (weak, nonatomic) IBOutlet UILabel *videoTitle;
+
+@end

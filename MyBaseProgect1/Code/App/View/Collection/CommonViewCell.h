@@ -1,0 +1,26 @@
+//
+
+
+#import <UIKit/UIKit.h>
+
+@interface CommonViewCell : UITableViewCell
+@property (weak, nonatomic) IBOutlet FLAnimatedImageView *bgImage;
+@property (weak, nonatomic) IBOutlet UILabel *desLable;
+@property (weak, nonatomic) IBOutlet UIImageView *userPhoto;
+@property (weak, nonatomic) IBOutlet UILabel *userName;
+@property (weak, nonatomic) IBOutlet UILabel *timeLale;
+@property (weak, nonatomic) IBOutlet UIButton *favoriteCount;//点赞数
+@property (weak, nonatomic) IBOutlet UIButton *commontCount;//评论数
+@property (weak, nonatomic) IBOutlet UIButton *browseCount;//转发
+
+@property (weak, nonatomic) IBOutlet UIView *topView;
+@property (weak, nonatomic) IBOutlet UIView *bottomView;
+@property (weak, nonatomic) IBOutlet UILabel *ScanLB;
+
+@property (weak, nonatomic) IBOutlet UILabel *commenLB;
+
+
++(instancetype)xibWithTableView;
++(NSString *)cellIdentify;
+
+@end

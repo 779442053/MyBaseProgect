@@ -1,0 +1,60 @@
+
+
+#import "UpVideoCell.h"
+
+@implementation UpVideoCell
+
+
++(instancetype)cellWithTableView:(UITableView *)tableView{
+  static NSString *cellId = @"UpVideoCell";
+  UpVideoCell *cell = [tableView dequeueReusableCellWithIdentifier:cellId];
+  if (cell == nil) {
+    cell = [[UpVideoCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:cellId];
+    cell.backgroundColor = THEMECOLOR;
+  }
+  return cell;
+}
+
+- (instancetype)initWithStyle:(UITableViewCellStyle)style reuseIdentifier:(NSString *)reuseIdentifier{
+  self = [super initWithStyle:style reuseIdentifier:reuseIdentifier];
+  if (self) {
+    [self setUI];
+  }
+  return self;
+}
+
+- (void)setUI {
+  UIImageView *imageView = [UIImageView new];
+  imageView.image = ims(@"add_gray");
+  [self addSubview:imageView];
+  self.uploadImageView = imageView;
+  [imageView mas_makeConstraints:^(MASConstraintMaker *make) {
+    make.left.equalTo(@(kWidth(15)));
+    make.width.height.equalTo(@(kWidth(100)));
+    make.centerY.equalTo(self.mas_centerY);
+  }];
+  
+  UIButton *uploadBtn = [UIButton buttonWithType:UIButtonTypeCustom];
+  uploadBtn.backgroundColor = [UIColor clearColor];
+  [self addSubview:uploadBtn];
+  self.uploadBtn = uploadBtn;
+  [uploadBtn mas_makeConstraints:^(MASConstraintMaker *make) {
+    make.left.equalTo(imageView.mas_left);
+    make.width.equalTo(imageView.mas_width);
+    make.height.equalTo(imageView.mas_height);
+    make.centerY.equalTo(self.mas_centerY);
+  }];
+}
+
+- (void)awakeFromNib {
+    [super awakeFromNib];
+    // Initialization code
+}
+
+- (void)setSelected:(BOOL)selected animated:(BOOL)animated {
+    [super setSelected:selected animated:animated];
+
+    // Configure the view for the selected state
+}
+
+@end

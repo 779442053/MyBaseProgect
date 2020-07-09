@@ -1,0 +1,210 @@
+//
+//  ApplicationTableViewCell.m
+//  KuaiZhu
+//
+//  Created by Ghy on 2019/5/15.
+//  Copyright © 2019年 su. All rights reserved.
+//
+
+#import "ApplicationTableViewCell.h"
+#import "StaticTaskModel.h"
+
+#define k_cell_height 70.0
+#define k_marin_left 10.0
+
+#define k_select_color [UIColor lightGrayColor]
+#define k_unselect_color [[UIColor alloc] colorFromHexInt:0xF75958 AndAlpha:1]
+
+@implementation ApplicationTableViewCell
+
+- (void)awakeFromNib {
+    [super awakeFromNib];
+    // Initialization code
+}
+
+-(instancetype)initWithStyle:(UITableViewCellStyle)style reuseIdentifier:(NSString *)reuseIdentifier{
+    if(self = [super initWithStyle:style reuseIdentifier:reuseIdentifier]){
+        
+        //没有选中样式
+        [self setSelectionStyle:UITableViewCellSelectionStyleNone];
+        
+        //没有背景色
+        self.backgroundColor = [UIColor clearColor];
+        
+        [self initView];
+    }
+    
+    return self;
+}
+
+- (void)setSelected:(BOOL)selected animated:(BOOL)animated {
+    [super setSelected:selected animated:animated];
+    
+    // Configure the view for the selected state
+}
+
+
+//MARK: - initView
+-(void)initView{
+    //MARK:标题
+    [self addSubview:self.labTitle];
+    
+    //MARK:描述
+    [self addSubview:self.labDescription];
+    
+    //MARK:按钮
+    [self addSubview:self.btnRight];
+    
+    //MARK:icon
+    [self addSubview:self.btnIcon];
+    [self addSubview:self.imgIcon];
+}
+
+-(UILabel *)labTitle{
+    if (!_labTitle) {
+        CGFloat x = 15;
+        CGFloat y = 12;
+        CGFloat w = 60;
+        CGFloat h = 21;
+        _labTitle = [BaseUIView createLable:CGRectMake(x, y, w, h)
+                                    AndText:@""
+                               AndTextColor:[[UIColor alloc] colorFromHexInt:0xF75958 AndAlpha:1]
+                                 AndTxtFont:[UIFont systemFontOfSize:14]
+                         AndBackgroundColor:nil];
+        _labTitle.textAlignment = NSTextAlignmentLeft;
+    }
+    return _labTitle;
+}
+
+-(UILabel *)labDescription{
+    if (!_labDescription) {
+        CGFloat x = 15;
+        CGFloat w = 200;
+        CGFloat h = 21;
+        CGFloat y = k_cell_height - h - 7;
+        _labDescription = [BaseUIView createLable:CGRectMake(x, y, w, h)
+                                    AndText:@""
+                               AndTextColor:[[UIColor alloc] colorFromHexInt:0x9B917E AndAlpha:1]
+                                 AndTxtFont:[UIFont systemFontOfSize:11]
+                         AndBackgroundColor:nil];
+        _labDescription.textAlignment = NSTextAlignmentLeft;
+    }
+    return _labDescription;
+}
+
+-(UIButton *)btnRight{
+    if (!_btnRight) {
+        CGFloat w = 84;
+        CGFloat h = 32;
+        CGFloat x = K_APP_WIDTH - w - 20;
+        CGFloat y = (k_cell_height - h) * 0.5;
+        _btnRight = [BaseUIView createBtn:CGRectMake(x, y, w, h)
+                                 AndTitle:@""
+                            AndTitleColor:k_unselect_color
+                               AndTxtFont:[UIFont systemFontOfSize:14]
+                                 AndImage:nil
+                       AndbackgroundColor:nil
+                           AndBorderColor:k_unselect_color
+                          AndCornerRadius:8
+                             WithIsRadius:YES
+                      WithBackgroundImage:nil
+                          WithBorderWidth:1];
+    }
+    return _btnRight;
+}
+
+-(UIButton *)btnIcon{
+    if (!_btnIcon) {
+        CGFloat w = 53;
+        CGFloat h = 21;
+        CGFloat x = self.labTitle.frame.origin.x + self.labTitle.frame.size.width + k_marin_left;
+        CGFloat y = 11;
+        _btnIcon = [BaseUIView createBtn:CGRectMake(x, y, w, h)
+                                 AndTitle:@"+1元"
+                            AndTitleColor:[[UIColor alloc] colorFromHexInt:0xF75958 AndAlpha:1]
+                               AndTxtFont:[UIFont systemFontOfSize:10]
+                                 AndImage:nil
+                       AndbackgroundColor:[[UIColor alloc] colorFromHexInt:0xFFD87C AndAlpha:1]
+                           AndBorderColor:nil
+                          AndCornerRadius:8
+                             WithIsRadius:YES
+                      WithBackgroundImage:nil
+                          WithBorderWidth:0];
+        //_btnIcon.contentHorizontalAlignment = UIControlContentHorizontalAlignmentRight;
+    }
+    return _btnIcon;
+}
+
+-(UIImageView *)imgIcon{
+    if (!_imgIcon) {
+        CGFloat x = self.btnIcon.frame.origin.x + 5;
+        _imgIcon = [BaseUIView createImage:CGRectMake(x, 4, 23, 23)
+                                  AndImage:[UIImage imageNamed:@"图层167.png"]
+                        AndBackgroundColor:nil
+                              WithisRadius:NO];
+    }
+    return _imgIcon;
+}
+
+
+//MARK: - action
+-(void)initCellBindData:(StaticTaskModel *)model AndTitle:(NSString *)strRight{
+    //标题
+    self.labTitle.text = [NSString stringWithFormat:@"%@",model.Title];
+    CGFloat w = [Utils getWidthForString:self.labTitle.text
+                              andFontSize:self.labTitle.font
+                                andHeight:self.labTitle.frame.size.height];
+    CGRect rect = self.labTitle.frame;
+    rect.size.width = w;
+    self.labTitle.frame = rect;
+    
+    //描述
+    self.labDescription.text = [NSString stringWithFormat:@"%@",model.Intro];
+    
+    //icon
+    NSString *strInfo = [NSString stringWithFormat:@"  +%lD",(long)model.Value];
+    [self.btnIcon setTitle:strInfo forState:UIControlStateNormal];
+    rect = self.btnIcon.frame;
+    rect.origin.x = self.labTitle.frame.origin.x + self.labTitle.frame.size.width + k_marin_left;
+    self.btnIcon.frame = rect;
+    
+    //////////////////////
+    strInfo = [self.labTitle.text hasPrefix:@"每日任务"]?@"图层167.png":@"图层43.png";
+    self.imgIcon.image = [UIImage imageNamed:strInfo];
+    rect = self.imgIcon.frame;
+    rect.origin.x = self.btnIcon.frame.origin.x + 5;
+    self.imgIcon.frame = rect;
+    
+    if ([strRight isEqualToString:@"立即注册"]) {
+        if ([UserModel userIsLogin]) {
+            self.btnRight.enabled = NO;
+            strRight = @"已注册";
+            
+            self.btnRight.layer.borderColor = k_select_color.CGColor;
+            [self.btnRight setTitleColor:k_select_color forState:UIControlStateNormal];
+        }
+        else{
+            self.btnRight.enabled = YES;
+            self.btnRight.layer.borderColor = k_unselect_color.CGColor;
+            [self.btnRight setTitleColor:k_unselect_color forState:UIControlStateNormal];
+        }
+    }
+    else{
+        [self.btnRight setTitleColor:k_unselect_color forState:UIControlStateNormal];
+    }
+    
+    [self.btnRight setTitle:strRight forState:UIControlStateNormal];
+}
+
+/** 列标识 */
++(NSString *)cellIdentify{
+    return @"application_table_view_cell_identify";
+}
+
+
+/** 列高度 */
++(CGFloat)cellHeight{
+    return k_cell_height;
+}
+
+@end

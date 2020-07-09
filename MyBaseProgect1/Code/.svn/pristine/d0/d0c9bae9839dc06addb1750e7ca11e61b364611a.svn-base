@@ -1,0 +1,64 @@
+//
+//  PopularizeModel.h
+//  快猪
+//
+//  Created by 魏冰杰 on 2019/1/18.
+//  Copyright © 2019年 时磊. All rights reserved.
+//
+
+#import <Foundation/Foundation.h>
+
+@class lvList;
+
+@interface PopularizeModel : NSObject
+
+@property (nonatomic, copy) NSArray <lvList *> *lvList;
+
+@property (nonatomic, copy) NSString *errorMessage;
+
+@property (nonatomic,assign) NSInteger resultCode;
+/** 看过的次数 */
+@property (nonatomic,assign) NSInteger viewCount;
+/** 剩余的查看次数 */
+@property (nonatomic,assign) NSInteger viewLeft;
+
+@property (nonatomic,  copy) NSString *userPhoto;
+
+@property (nonatomic,  copy) NSString *userName;
+/** 分享二维码链接 */
+@property (nonatomic,  copy) NSString *shareUrl;
+/** 下一等级 */
+@property (nonatomic,  copy) NSString *nextLvName;
+/** 邀请码 */
+@property (nonatomic,  copy) NSString *invCode;
+/** 视频下载次数 */
+@property (nonatomic,assign) NSInteger cacheCount;
+/** 当前等级名称 */
+@property (nonatomic,  copy) NSString *curLvName;
+
+@property (nonatomic,  copy) NSString *curlvIcon;//当前等级图标
+/** 快速分享地址 */
+@property (nonatomic,  copy) NSString *shareFastUrl;
+/** 到达下一等级需要的推荐人数 */
+@property (nonatomic,assign) NSInteger expToNextLv;
+
+@property (nonatomic,  copy) NSString *nextLvIcon;//下一个等级图标
+/** 今日可观看次数:为负值的时候为无限 */
+@property (nonatomic,assign) NSInteger maxViewCount;
+
+@end
+
+@interface lvList : NSObject
+
+@property (nonatomic,  copy) NSString *iconName;
+/** 是否已达到当前等级 */
+@property (nonatomic,assign) BOOL isComplete;
+/** 等级描述信息 */
+@property (nonatomic,  copy) NSString *lvDesc;
+
+@property (nonatomic,  copy) NSString *lvIcon;
+
+@property (nonatomic,  copy) NSString *lvName;
+
+
+@end

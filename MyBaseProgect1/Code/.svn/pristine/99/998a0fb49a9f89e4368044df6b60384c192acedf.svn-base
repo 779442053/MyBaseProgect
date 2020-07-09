@@ -1,0 +1,42 @@
+//
+//  JSShareView.m
+//  kToutiao
+//
+//  Created by jasonguo on 2019/4/19.
+//  Copyright © 2019 时磊. All rights reserved.
+//
+
+#import "JSShareView.h"
+#import "PopularizeModel.h"
+
+@implementation JSShareView
+
++ (instancetype)starShareView
+{
+    return [[[NSBundle mainBundle] loadNibNamed:@"JSShareView" owner:nil options:nil]lastObject];
+}
+
+-(void)setPopularizeModel:(PopularizeModel *)popularizeModel{
+    _popularizeModel = popularizeModel;
+    self.urlLb.text = [NSString stringWithFormat:@"链接地址 :%@",popularizeModel.shareUrl];
+    self.xiayijiLb.text = [NSString stringWithFormat:@"离下一级还需要增加%ld次分享次数 ",(long)_popularizeModel.expToNextLv];
+    
+    //今日可观看次数
+    self.cishuLb.text = _popularizeModel.maxViewCount < 0 ? @"无限" :[NSString stringWithFormat:@"%lD",(long)_popularizeModel.maxViewCount];
+
+    //观看剩余次数：maxViewCount - viewCount ,  maxViewCount为负值的时候为无限
+    NSInteger count = _popularizeModel.maxViewCount - _popularizeModel.viewCount;
+    self.shenyuLb.text = _popularizeModel.maxViewCount < 0 ? @"无限":[NSString stringWithFormat:@"%lD",(long)count];
+    
+    float widthW = 332 - 76;
+    float widthS = _popularizeModel.viewCount > 0?(widthW / _popularizeModel.viewCount):widthW;
+    NSInteger countA  = _popularizeModel.viewLeft;//剩余
+    if (countA < 0) countA = 0;
+    
+    NSInteger employCount = _popularizeModel.viewCount - countA;
+  
+    float widthF = widthS * employCount;
+    self.viewWidth.constant = widthF;
+}
+
+@end

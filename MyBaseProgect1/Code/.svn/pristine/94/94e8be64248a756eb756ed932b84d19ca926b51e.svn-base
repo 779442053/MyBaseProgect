@@ -1,0 +1,27 @@
+#import <UIKit/UIKit.h>
+
+NS_ASSUME_NONNULL_BEGIN
+
+/**
+ * 视频详情分享
+ */
+@interface MovieDetailsShareView : UIView
+
+
+@property (nonatomic, weak) IBOutlet UILabel *labTitle;
+@property (nonatomic, weak) IBOutlet UIButton *btnWX;
+@property (nonatomic, weak) IBOutlet UIButton *btnQQ;
+@property (nonatomic, weak) IBOutlet UIButton *btnCopy;
+
+/** 初始化 */
++ (instancetype)movieDetailsShareViewInitXib;
+
+/**
+ * 分享闭包
+ * @param selectType 1 微信 2QQ 3复制
+ */
+@property (nonatomic, copy) void(^_Nonnull shareTypeBlock)(NSInteger selectType);
+
+@end
+
+NS_ASSUME_NONNULL_END

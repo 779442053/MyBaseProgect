@@ -1,0 +1,283 @@
+//
+//  GlobalSetting.h
+//  QuanPaiPai
+//
+//  Created by XianXin on 2018/12/14.
+//  Copyright © 2018 XianXin. All rights reserved.
+//
+
+#ifndef GlobalSetting_h
+#define GlobalSetting_h
+
+//////////////////////////////////////////////////////////////
+//MARK: - 系统配置设置
+//////////////////////////////////////////////////////////////
+/** 应用编号(应用商店编号) */
+#define K_APP_ID @"000000"
+
+/** 包名 */
+#define K_APP_BUNDLE_ID [[[NSBundle mainBundle] infoDictionary] valueForKey:@"CFBundleIdentifier"]
+
+/** 项目名 */
+#define K_APP_NAME [[[NSBundle mainBundle] infoDictionary] valueForKey:@"CFBundleDisplayName"]
+
+/** App主颜色 */
+#define K_APP_TINT_COLOR [[UIColor alloc] colorFromHexInt:0x5482FD AndAlpha:1.0]
+
+/** 视图背景色 */
+#define K_APP_VIEWCONTROLLER_BACKGROUND_COLOR [UIColor whiteColor]
+
+/** 视图标题颜色 */
+#define K_APP_VIEWCONTROLLER_TITLE_COLOR [[UIColor alloc] colorFromHexInt:0x1a1a1a AndAlpha:1.0]
+
+/** 分割线颜色 */
+#define K_APP_SPLIT_LINE_COLOR [[UIColor alloc] colorFromHexInt:0xCEDAF9 AndAlpha:1.0]
+
+/** 分隔条颜色 */
+#define K_APP_SPLIT_STRIP_COLOR [[UIColor alloc] colorFromHexInt:0xCDC9C9 AndAlpha:1.0]
+
+/** 视图阴影颜色 */
+#define K_APP_VIEW_SHADOW_COLOR [[UIColor alloc] colorFromHexInt:0x939aa2 AndAlpha:1.0]
+
+/** 导航栏颜色 */
+#define K_APP_NAVIGATION_BACKGROUND_COLOR [UIColor whiteColor]
+
+/** 白色返回图标 */
+#define K_APP_WHITE_BACK @"nav_camera_back_white.png"
+
+/** 黑色返回图标 */
+#define K_APP_BLACK_BACK @"nav_camera_back_black.png"
+
+#define THEMECOLOR [UIColor colorWithHexString:@"#fffff"]
+
+#define K_APP_LATERAL_SPREADS  @"app_swip_key"
+
+#define ims(s)  [UIImage imageNamed:s]
+#define urlWith(s) [NSURL URLWithString:s]
+#define URLWithStr(str) [NSURL URLWithString:str]
+#define URLFilePath(str) [NSURL fileURLWithPath:str]
+
+#define rgb(r,g,b) [UIColor colorWithRed:r/255.0f green:g/255.0f blue:b/255.0f alpha:1.0]
+
+//MARK: - 适配信息
+/** 设备宽 */
+#define K_APP_WIDTH UIScreen.mainScreen.bounds.size.width
+//获取在不同屏幕上的真实高度
+#define kRealValueHeight_S(width) (width)*465.0/260.0
+#define kRealValueHeight_H(width) (width)*290.0/260.0
+/** 设备高 */
+#define K_APP_HEIGHT UIScreen.mainScreen.bounds.size.height
+
+/** 视图标题大小 */
+#define K_APP_VIEWCONTROLLER_TITLE_FONT 24.0
+
+//屏幕适配
+#define kWidth(x) ((x)*(K_APP_WIDTH)/375.0)
+#define kHeight(y) ((y)*(K_APP_HEIGHT)/667.0)
+
+//用户昵称长度
+#define kChineseLen 25
+
+/** iPhoneX底部 Home 区域 */
+#define K_APP_IPHONX_BUTTOM 34.0
+
+/** iPhoneX顶部 导航 区域 */
+#define K_APP_IPHONX_TOP 44.0
+
+/** 底部tabbar 高度 */
+#define K_APP_TABBAR_HEIGHT ([[UIDevice currentDevice] isiPhoneX] ? 82.0 : 48.0)
+
+/** 导航栏高度 */
+#define K_APP_NAVIGATION_BAR_HEIGHT ([[UIDevice currentDevice] isiPhoneX] ? 88.0 : 64.0)
+
+/** 状态栏高度 */
+#define K_APP_STATUS_BAR_HEIGHT ([[UIDevice currentDevice] isiPhoneX] ? 44.0 : 20.0)
+
+//tbbbar顶部线
+#define K_APP_TABBAR_TOP_LINE @"app_tabbar_top_line"
+
+//MARK: - 网络信息
+//全局网络对象
+#define K_APP_REACHABILITY [AFNetworkReachabilityManager sharedManager]
+
+#define K_APP_IS_NET_WORK @"app_is_net_work"
+
+#define K_APP_NO_NETWORK_INFO @"网络异常，请检查网络"
+
+//MARK: -
+//透明图片
+#define K_APP_TABBAR_CLEARN_IMAGE @"app_tabbar_clearn_image"
+
+/** 视图阴影透明度 */
+#define K_APP_VIEW_CELL_SHADOW_OPACITY 0.5
+
+//视图阴影透明度
+#define K_APP_VIEW_CELL_SHADOW_OPACITY 0.5
+
+//app 引导 key
+#define K_APP_START_GUIDE_VIEW_KEY @"app_start_guide_view"
+#define K_APP_START_GUIDE_VIEW_HAS_KEY @"app_start_guide_view_has"
+
+//默认小图
+#define K_APP_DEFAULT_IMAGE_SMALL [UIImage imageNamed:@"main_none_img_small"]
+
+//默认用户图像
+#define K_APP_DEFAULT_USER_IMAGE [UIImage imageNamed:@"我的.png"]
+
+//默认大图图
+#define K_APP_DEFAULT_IMAGE_BIG [UIImage imageNamed:@"main_none_img_big"]
+
+/** 系统缓存目录 */
+#define K_APPLICATION_CACHE_PATH [NSString stringWithFormat:@"%@/%@",[NSSearchPathForDirectoriesInDomains(NSCachesDirectory, NSUserDomainMask, YES) firstObject],K_APP_BUNDLE_ID]
+
+
+//广告停留时间(单位：秒)
+#define K_LAUNCH_TIME @"ad_launch_time"
+#define K_LAUNCH_AD_INTERVAL ([[NSUserDefaults standardUserDefaults] integerForKey:K_LAUNCH_TIME]<=0?5:[[NSUserDefaults standardUserDefaults] integerForKey:K_LAUNCH_TIME])
+
+#define K_APP_SHARE_INFO @"platform=IOS"
+
+//MARK: - 登录键
+#define K_APP_LOGIN_DATA_KEY @"app_login_data"
+#define K_APP_LOGIN_SET_KEY @"app_user_is_login"
+
+//登录cookie
+#define LOGIN_COOKIE_KEY @"Cookie"
+#define LOGIN_COOKIE ([UserModel shareInstance]?[[UserModel shareInstance] LoginCookie]:@"")
+
+
+////////////////////////////////////////////////////////////////////////////////
+//MARK: - FMDB
+////////////////////////////////////////////////////////////////////////////////
+/** 数据库路径 */
+#define K_FMDB_PATH [NSString stringWithFormat:@"%@/AppDBFile.sqlite",[NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES) firstObject]]
+
+/** 用户登录名信息表 */
+#define K_FMDB_USER_LOGIN_INFO @"users_login_info"
+
+/** 电影观看历史信息表 */
+#define K_FMDB_MOVIES_HISTORY_INFO @"moves_history_info"
+
+/** 电影下载信息表 */
+#define K_FMDB_MOVIES_DOWNLOAD_INFO @"moves_download_info"
+
+
+////////////////////////////////////////////////////////////////////////////////
+//MARK: - 头都菜单配置信息
+////////////////////////////////////////////////////////////////////////////////
+//头部选中菜单颜色、默认颜色
+#define K_HEAD_MENU_SELECT_COLOR [[UIColor alloc] colorFromHexInt:0x000000 AndAlpha:1.0]
+#define K_HEAD_MENU_DEFAULT_COLOR [[UIColor alloc] colorFromHexInt:0xA7A7A8 AndAlpha:1.0]
+
+//头部菜单字体大小
+#define K_HEAD_MENU_FONT_SIZE 20
+
+//菜单底部指示线宽度
+#define K_HEAD_BOTTOM_LINE_WIDTH 6.0
+
+//缩放级别
+#define K_HEAD_MENU_SCALE 1.25
+
+//下划线颜色
+#define K_HEAD_MENU_LINE_COLOR [[UIColor alloc] colorFromHexInt:0xFF4C4C AndAlpha:1.0]
+
+//菜单底部指示线高度
+#define K_HEAD_BOTTOM_LINE_HEIGHT 6.0
+
+//下划线圆角
+#define K_HEAD_BOTTOM_LINE_CORNER (K_HEAD_BOTTOM_LINE_HEIGHT * 0.5)
+
+//MARK: -
+#define K_MAIN_AD_DATA @"main_top_banner_data"
+#define K_APP_LAUNCH_AD_DATA @"app_launch_ad_data"
+#define K_APP_BOX_WIDTH (K_APP_WIDTH - 80)
+#define K_APP_BOX_SHOW_NOTICE @"notice_box_show"
+
+////////////////////////////////////////////////////////////////////////////////
+//MARK: - Bugly测试配置信息
+////////////////////////////////////////////////////////////////////////////////
+#define K_APP_BUGLY_APP_ID @"ac84635c29"
+#define K_APP_BUGLY_APP_KEY @"60ff1d02-b91b-4b11-8214-f84280e704e4"
+
+////////////////////////////////////////////////////////////////////////////////
+//MARK: - fir.im 版本检测
+////////////////////////////////////////////////////////////////////////////////
+#define K_APP_FIR_IM_URL @"https://api.fir.im/apps/latest/5cd916eaca87a87b6169cfbe"
+
+//fir.im token
+#define K_APP_FIR_IM_TOKEN @"c8e3b5b088c7ab9aa73807b518ec9c29"
+
+#define K_APP_REQUEST_PLATFORM @"IOS"
+
+
+//MARK: - 视频
+/** 视频下载目录 */
+#define K_APP_VIDEO_DOWNLOAD_PATH [NSString stringWithFormat:@"%@/Video/Download/",[NSSearchPathForDirectoriesInDomains(NSLibraryDirectory, NSUserDomainMask, YES) firstObject]]
+
+/** 视频转换目录 */
+#define K_APP_VIDEO_CONVERT_PATH [NSString stringWithFormat:@"%@/%@/Video/Convert",[NSSearchPathForDirectoriesInDomains(NSCachesDirectory, NSUserDomainMask, YES) firstObject],K_APP_BUNDLE_ID]
+
+#define K_APP_VIDEO_CONVERT_PATHTWO [NSString stringWithFormat:@"%@/%@/Video/Convert",[NSSearchPathForDirectoriesInDomains(NSCachesDirectory, NSUserDomainMask, YES) firstObject],K_APP_BUNDLE_ID]
+//[[NSSearchPathForDirectoriesInDomains(NSCachesDirectory, NSUserDomainMask, YES) firstObject] stringByAppendingPathComponent:@"camera_movie"];
+
+#define K_APP_VIDEO_UPLOAD_REFRESH @"video_upload_refresh"
+
+//MARK: - 宏方法
+#define hsb(h,s,b) [UIColor colorWithHue:h/360.0f saturation:s/100.0f brightness:b/100.0f alpha:1.0]
+
+/** 微软雅黑 */
+#define FONT(f) [UIFont fontWithName:@"Microsoft YaHei" size:f]
+#define FONTOFPX(f) [UIFont systemFontOfSize:((f/2)+1)]
+
+/** Adobe 黑体 */
+#define ADOBE_FONT(f) [UIFont fontWithName:@"Adobe Heiti Std" size:f]
+
+/** RGB */
+#define RGBCOLOR(r,g,b) [UIColor colorWithRed:(r)/255.0f green:(g)/255.0f blue:(b)/255.0f alpha:1]
+
+#define KZImage(image)  [UIImage imageNamed:image]
+#define READ_USER_DATA_FINISH @"readUserDataFinish"
+
+#ifndef weakify
+#if DEBUG
+#if __has_feature(objc_arc)
+#define weakify(object) autoreleasepool{} __weak __typeof__(object) weak##_##object = object;
+#else
+#define weakify(object) autoreleasepool{} __block __typeof__(object) block##_##object = object;
+#endif
+#else
+#if __has_feature(objc_arc)
+#define weakify(object) try{} @finally{} {} __weak __typeof__(object) weak##_##object = object;
+#else
+#define weakify(object) try{} @finally{} {} __block __typeof__(object) block##_##object = object;
+#endif
+#endif
+#endif
+
+#ifndef strongify
+#if DEBUG
+#if __has_feature(objc_arc)
+#define strongify(object) autoreleasepool{} __typeof__(object) object = weak##_##object;
+#else
+#define strongify(object) autoreleasepool{} __typeof__(object) object = block##_##object;
+#endif
+#else
+#if __has_feature(objc_arc)
+#define strongify(object) try{} @finally{} __typeof__(object) object = weak##_##object;
+#else
+#define strongify(object) try{} @finally{} __typeof__(object) object = block##_##object;
+#endif
+#endif
+#endif
+
+
+#ifdef DEBUG
+#define ZWWLog(fmt, ...) NSLog((@"\n[文件名:%s]\n""[函数名:%s]""[行号:%d] \n" fmt), __FILE__, __FUNCTION__, __LINE__, ##__VA_ARGS__);
+#else
+#define ZWWLog(...)
+#endif
+
+
+
+
+#endif /* GlobalSetting_h */

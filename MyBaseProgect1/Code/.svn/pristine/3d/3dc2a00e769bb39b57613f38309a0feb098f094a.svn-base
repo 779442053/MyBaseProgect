@@ -1,0 +1,318 @@
+//
+//  SettingVC.m
+//  快猪
+//
+//  Created by layne on 2018/5/13.
+//  Copyright © 2018年 时磊. All rights reserved.
+//
+
+#import "SettingVC.h"
+#import "UserSettingVC.h"
+#import "ChangePwdVC.h"
+#import "FeedbackVC.h"
+#import "ChangeInfoVC.h"
+#import "MineModel.h"
+#import "SetTableCell.h"
+#import "ConfigViewController.h"
+
+@interface SettingVC () <UITableViewDelegate,UITableViewDataSource>
+
+@property (nonatomic, strong) UITableView *setTableView;
+
+@property (nonatomic, strong) NSMutableArray *dataSource;
+
+@end
+
+@implementation SettingVC
+
+- (void)viewDidLoad {
+  [super viewDidLoad];
+  [self initUI];
+}
+- (void)viewWillAppear:(BOOL)animated {
+    [super viewWillAppear:animated];
+}
+- (void)initUI{
+    
+    //MARK:导航
+    [self initNavgationBar:K_APP_NAVIGATION_BACKGROUND_COLOR
+          AndHasBottomLine:NO
+              AndHasShadow:YES
+             WithHasOffset:0.0];
+    
+    //MARK:返回
+    [self initNavigationBack:K_APP_BLACK_BACK];
+    
+    //MARK:标题
+    [self initViewControllerTitle:@"系统设置"
+                     AndFontColor:K_APP_VIEWCONTROLLER_TITLE_COLOR
+                       AndHasBold:NO
+                      AndFontSize:K_APP_VIEWCONTROLLER_TITLE_FONT];
+    
+  [self.view addSubview:self.setTableView];
+  [self.setTableView mas_makeConstraints:^(MASConstraintMaker *make) {
+    make.top.mas_equalTo(K_APP_NAVIGATION_BAR_HEIGHT);
+    make.left.mas_equalTo(0);
+    make.width.mas_equalTo(K_APP_WIDTH);
+    make.height.mas_equalTo(K_APP_HEIGHT);
+  }];
+}
+- (void)didReceiveMemoryWarning {
+  [super didReceiveMemoryWarning];
+}
+//MARK: - 侧滑控制
+-(IBAction)switchChangeAction:(UISwitch *)sender{
+    BOOL currentStatus = sender.isOn;
+    [[NSUserDefaults standardUserDefaults] setBool:currentStatus forKey:K_APP_LATERAL_SPREADS];
+    [[NSUserDefaults standardUserDefaults] synchronize];
+    [YJProgressHUD showInfo:[NSString stringWithFormat:@"侧滑手势%@",currentStatus ? @"已开启":@"已关闭"]];
+}
+- (NSInteger)compareVersion:(NSString *)currentVersion to:(NSString *)netVersion
+{
+    // 获取版本号字段
+    NSArray *v1Array = [currentVersion componentsSeparatedByString:@"."];
+    NSArray *v2Array = [netVersion componentsSeparatedByString:@"."];
+    // 取字段最大的，进行循环比较
+    NSInteger bigCount = (v1Array.count > v2Array.count) ? v1Array.count : v2Array.count;
+
+    for (int i = 0; i < bigCount; i++) {
+        // 字段有值，取值；字段无值，置0。
+        NSInteger value1 = (v1Array.count > i) ? [[v1Array objectAtIndex:i] integerValue] : 0;
+        NSInteger value2 = (v2Array.count > i) ? [[v2Array objectAtIndex:i] integerValue] : 0;
+        if (value1 > value2) {
+            // v1版本字段大于v2版本字段，返回1
+            return 1;
+        } else if (value1 < value2) {
+            // v2版本字段大于v1版本字段，返回2
+            return 2;
+        }
+    }
+
+    // 版本号相等
+    return 0;
+}
+//检查版本更新
+-(void)getAppInfo{
+    NSString *strUrl = [NSString stringWithFormat:@"%@Version",K_APP_HOST];
+    NSDictionary *dicParam = @{@"d":@"IOS"};
+    [Utils getRequestForServerData:strUrl
+                    withParameters:dicParam
+                AndHTTPHeaderField:nil
+                    AndSuccessBack:^(id _responseData) {
+                        ZWWLog(@"版本信息==：%@",_responseData);
+                        //拿出本地的版本进行判断,如需更新.将提示框加在window层上面.更新,就打开网址即可
+                        NSString *version = _responseData[@"version"];
+                        NSDictionary *infoDictionary = [[NSBundle mainBundle] infoDictionary];
+                        NSString *Currentversion = [infoDictionary objectForKey:@"CFBundleShortVersionString"];
+                        NSString *app_build = [infoDictionary objectForKey:@"CFBundleVersion"];
+                        ZWWLog(@"=程序员版本号=\n=%@    =\n服务器=%@  对外展示版本=\n%@",app_build,version,Currentversion)
+                        ZWWLog(@"=本地=\n=%@    =\n服务器=%@",app_build,version)
+                        //if ([self compareVersion:app_build to:version] == 2){
+                        if ([app_build floatValue] < [version floatValue]){
+                            //ZWWLog(@"=本地==%@    =服务器=%@",app_build,version)
+                            NSString *strInfo = [NSString stringWithFormat:@"当前版本：%@，最新版本：%@,请点击更新",Currentversion,[_responseData objectForKey:@"info"]];
+                            NSMutableAttributedString *alertControllerMessageStr = [[NSMutableAttributedString alloc] initWithString:strInfo];
+                            NSMutableParagraphStyle *paragraph = [[NSMutableParagraphStyle alloc] init];
+                            paragraph.alignment = NSTextAlignmentLeft;
+                            [alertControllerMessageStr setAttributes:@{NSParagraphStyleAttributeName:paragraph} range:NSMakeRange(0, alertControllerMessageStr.length)];
+                            UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"发现新版本" message:@""
+                                                                                    preferredStyle:UIAlertControllerStyleAlert];
+                            [alert setValue:alertControllerMessageStr forKey:@"attributedMessage"];
+                            UIAlertAction *download = [UIAlertAction actionWithTitle:@"更新" style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
+                                NSString *str = _responseData[@"url"];
+                                //                                NSString *encodedString = [str stringByAddingPercentEncodingWithAllowedCharacters:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
+                                if ([[UIApplication sharedApplication] canOpenURL:[NSURL URLWithString:str]]) {
+                                    [[UIApplication sharedApplication] openURL:[NSURL URLWithString:str] options:@{} completionHandler:^(BOOL success) {
+                                        if (!success) {
+                                            [YJProgressHUD showError:@"URL 无效"];
+                                        }
+                                    }];
+                                }
+                            }];
+                            //强制更新，没有取消按钮
+                            UIAlertAction *cancle = [UIAlertAction actionWithTitle:@"取消" style:UIAlertActionStyleCancel handler:nil];
+                            [alert addAction:download];
+                            [alert addAction:cancle];
+                            [self presentViewController:alert animated:YES completion:nil];
+                        }else{
+                            [YJProgressHUD showSuccess:@"当前已是最新版本"];
+                        }
+                    }
+                    AndFailureBack:^(NSString *_strError) {
+                        ZWWLog(@"版本信息载失败！详见：%@",_strError);
+                    }
+                     WithisLoading:NO];
+}
+//MARK: - 版本更新检测
+-(void)appUpdateCheck{
+    @autoreleasepool {
+        [self getAppInfo];
+
+//        NSString *strUrl = [NSString stringWithFormat:@"%@",K_APP_FIR_IM_URL];
+//        NSDictionary *dicParams = @{
+//                                    @"api_token":K_APP_FIR_IM_TOKEN,
+//                                    @"type":K_APP_REQUEST_PLATFORM
+//                                    };
+//        [Utils getRequestForServerData:strUrl
+//                        withParameters:dicParams
+//                    AndHTTPHeaderField:nil
+//                        AndSuccessBack:^(id  _Nullable _responseData) {
+//                            ZWWLog(@"版本更新检测成功！详见：%@",_responseData);
+//                            dispatch_async(dispatch_get_main_queue(), ^{
+//                                [self showDownLoad:_responseData];
+//                            });
+//                        } AndFailureBack:^(NSString * _Nullable _strError) {
+//                            ZWWLog(@"版本更新检测失败！详见：%@",_strError);
+//                            [YJProgressHUD showInfo:_strError];
+//                        } WithisLoading:YES];
+    }
+}
+
+-(void)showDownLoad:(NSDictionary *)response{
+    NSDictionary *infoDictionary = [[NSBundle mainBundle] infoDictionary];
+    NSString *app_build = [infoDictionary objectForKey:@"CFBundleShortVersionString"];
+    if ([app_build intValue] < [response[@"build"] intValue]) {
+        NSString *strInfo = [NSString stringWithFormat:@"\n%@",[response objectForKey:@"changelog"]];
+        NSMutableAttributedString *alertControllerMessageStr = [[NSMutableAttributedString alloc] initWithString:strInfo];
+        NSMutableParagraphStyle *paragraph = [[NSMutableParagraphStyle alloc] init];
+        paragraph.alignment = NSTextAlignmentLeft;
+        [alertControllerMessageStr setAttributes:@{NSParagraphStyleAttributeName:paragraph} range:NSMakeRange(0, alertControllerMessageStr.length)];
+        UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"发现新版本" message:@""
+                                                                preferredStyle:UIAlertControllerStyleAlert];
+        [alert setValue:alertControllerMessageStr forKey:@"attributedMessage"];
+        UIAlertAction *download = [UIAlertAction actionWithTitle:@"更新" style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
+            NSString *str = response[@"installUrl"];
+            NSString *encodedString = [str stringByAddingPercentEncodingWithAllowedCharacters:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
+            NSString *urlStr = [NSString stringWithFormat:@"itms-services://?action=download-manifest&url=%@",encodedString];
+            if ([[UIApplication sharedApplication] canOpenURL:[NSURL URLWithString:urlStr]]) {
+                [[UIApplication sharedApplication] openURL:[NSURL URLWithString:urlStr] options:@{} completionHandler:nil];
+            }
+        }];
+        //强制更新，没有取消按钮
+        UIAlertAction *cancle = [UIAlertAction actionWithTitle:@"取消" style:UIAlertActionStyleCancel handler:nil];
+        [alert addAction:download];
+        [alert addAction:cancle];
+        [self presentViewController:alert animated:YES completion:nil];
+    }
+    else{
+        [YJProgressHUD showSuccess:@"当前已是最新版本"];
+    }
+}
+//MARK: -  UITableViewDelegate
+- (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section{
+  return self.dataSource.count;
+}
+- (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView{
+  return 1;
+}
+
+- (CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath{
+  return 50;
+}
+
+- (CGFloat)tableView:(UITableView *)tableView heightForHeaderInSection:(NSInteger)section{
+  return CGFLOAT_MIN;
+}
+
+- (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath{
+    SetTableCell *cell = [SetTableCell xinWithTableView];
+    cell.backgroundColor = THEMECOLOR;
+    MineModel *model = self.dataSource[indexPath.row];
+    
+    cell.image.image = model.image;
+    cell.title.text = model.title;
+    
+    if (indexPath.row == 5) {
+        UISwitch *_switch;
+        if ([cell.accessoryView isKindOfClass:[UISwitch classForCoder]]) {
+            _switch = (UISwitch *)cell.accessoryView;
+        }
+        else{
+            _switch = [[UISwitch alloc] init];
+            cell.accessoryView = _switch;
+            [_switch addTarget:self action:@selector(switchChangeAction:) forControlEvents:UIControlEventValueChanged];
+        }
+        BOOL isSwitch = [[NSUserDefaults standardUserDefaults] boolForKey:K_APP_LATERAL_SPREADS];
+        [_switch setOn:isSwitch];
+        cell.accessoryType = UITableViewCellAccessoryNone;
+    }
+    else if (indexPath.row == 3) {
+        cell.detailLabel.hidden = NO;
+        NSDictionary *infoDictionary = [[NSBundle mainBundle] infoDictionary];
+        NSString* strVersion = [NSString stringWithFormat:@"V%@",infoDictionary[@"CFBundleShortVersionString"]];
+        cell.detailLabel.text = strVersion;
+        cell.selectionStyle = UITableViewCellSelectionStyleNone;
+    }
+    else {
+        cell.selectionStyle = UITableViewCellSelectionStyleNone;
+        cell.accessoryType = UITableViewCellAccessoryDisclosureIndicator;
+    }
+    return cell;
+}
+- (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath{
+    [tableView deselectRowAtIndexPath:indexPath animated:YES];
+    if (indexPath.row == 0) {
+      if (![UserModel userIsLogin]) {
+          [YJProgressHUD showInfo:@"请先登录"];
+          return;
+      }
+      UserSettingVC *vc = [UserSettingVC new];
+      [self.navigationController pushViewController:vc animated:YES];
+    }
+    else if (indexPath.row == 1) {
+      if (![UserModel userIsLogin]) {
+          [YJProgressHUD showInfo:@"请先登录"];
+          return;
+      }
+      ChangePwdVC *vc = [ChangePwdVC new];
+      [self.navigationController pushViewController:vc animated:YES];
+    }
+    else if(indexPath.row == 2){
+       if (![UserModel userIsLogin]) {
+           [YJProgressHUD showInfo:@"请先登录"];
+           return;
+       }
+       FeedbackVC *vc = [FeedbackVC new];
+       [self.navigationController pushViewController:vc animated:YES];
+    }
+    else if(indexPath.row == 4){
+       ConfigViewController *configVC = [[ConfigViewController alloc] init];
+       [self.navigationController pushViewController:configVC animated:YES];
+    }
+    else if(indexPath.row == 3){
+       [self appUpdateCheck];
+    }
+}
+
+
+//MARK: - lazy load
+- (UITableView *)setTableView{
+  if (!_setTableView) {
+    _setTableView = [[UITableView alloc] initWithFrame:CGRectMake(0, 60, K_APP_WIDTH, K_APP_HEIGHT - 70) style:UITableViewStyleGrouped];
+    _setTableView.tableHeaderView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, 0, CGFLOAT_MIN)];
+    _setTableView.backgroundColor = [UIColor whiteColor];
+    _setTableView.delegate = self;
+    _setTableView.dataSource = self;
+    _setTableView.separatorInset = UIEdgeInsetsMake(0, 15, 0, 15);
+    _setTableView.separatorStyle = UITableViewCellSeparatorStyleSingleLine;
+  }
+  return _setTableView;
+}
+- (NSMutableArray *)dataSource{
+  if (!_dataSource) {
+//      NSArray *titleArr = @[@"用户设置",@"修改密码",@"意见反馈",@"服务配置",@"开启侧滑",@"检测新版本"];
+//      NSArray *imgArr = @[@"用户设置.png",@"xgmm",@"意见反馈.png",@"setting_config.png",@"setting_swip.png",@"jc"];
+      NSArray *titleArr = @[@"用户设置",@"修改密码",@"意见反馈",@"检测新版本"];
+      NSArray *imgArr = @[@"用户设置.png",@"xgmm",@"意见反馈.png",@"jc"];
+      _dataSource = [NSMutableArray array];
+      for (int i = 0 ; i < titleArr.count; i++) {
+          MineModel *model = [MineModel new];
+          model.title = titleArr[i];
+          model.image = ims(imgArr[i]);
+          [_dataSource addObject:model];
+      }
+  }
+  return _dataSource;
+}
+
+@end

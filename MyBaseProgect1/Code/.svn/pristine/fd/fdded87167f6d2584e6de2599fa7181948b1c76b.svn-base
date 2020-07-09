@@ -1,0 +1,16 @@
+//
+//  RecentVC.h
+//  快猪
+//
+//  Created by layne on 2018/6/6.
+//  Copyright © 2018年 时磊. All rights reserved.
+//
+
+#import <UIKit/UIKit.h>
+
+/**
+ * 近期观看(历史)
+ */
+@interface RecentVC : BaseViewController
+
+@end

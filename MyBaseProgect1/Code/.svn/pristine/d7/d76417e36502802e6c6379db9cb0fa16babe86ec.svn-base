@@ -1,0 +1,303 @@
+//
+//  BaseViewController.m
+//  券拍拍
+//
+//  Created by XXP on 18/12/11.
+//  Copyright (c) 2018年 XianXinTechnology. All rights reserved.
+//
+
+#import "BaseViewController.h"
+#import "LoginViewController.h"
+#import "UpLoadViewController.h"
+#import "FansViewController.h"
+
+@interface BaseViewController ()<UIGestureRecognizerDelegate>
+
+@end
+
+@implementation BaseViewController
+
+- (void)viewDidLoad {
+    [super viewDidLoad];
+    // Do any additional setup after loading the view.
+
+    
+    //背景色
+    self.view.backgroundColor = K_APP_VIEWCONTROLLER_BACKGROUND_COLOR;
+    //ZWWLog(@"会不会走这个方法,\n会不会走这个方法,\n会不会走这个方法,\n会不会走这个方法")
+    
+    //视图滑动
+    [self viewSwipeAnimatio];
+}
+
+/** 设置渐变背景 */
+-(void)setBackgroundColor{
+    
+    CAGradientLayer *gl = [CAGradientLayer layer];
+    gl.frame = CGRectMake(0,0,K_APP_WIDTH,K_APP_HEIGHT);
+    gl.startPoint = CGPointMake(0, 0);
+    gl.endPoint = CGPointMake(1, 1);
+    gl.colors = @[(__bridge id)[UIColor colorWithRed:215/255.0 green:225/255.0 blue:255/255.0 alpha:1.0].CGColor,(__bridge id)[UIColor colorWithRed:255/255.0 green:255/255.0 blue:255/255.0 alpha:1.0].CGColor];
+    gl.locations = @[@(0.0),@(1.0f)];
+
+    self.view.backgroundColor = [UIColor clearColor];
+    [self.view.layer insertSublayer:gl atIndex:0];
+}
+
+- (void)didReceiveMemoryWarning {
+    [super didReceiveMemoryWarning];
+    // Dispose of any resources that can be recreated.
+}
+
+
+/** initNavgationBar 设置导航栏 */
+-(void)initNavgationBar:(UIColor *)backgroundColor AndHasBottomLine:(BOOL)line AndHasShadow:(BOOL)shadow WithHasOffset:(CGFloat)offset{
+  
+    _h = K_APP_NAVIGATION_BAR_HEIGHT;
+    if (offset) {
+        _h += offset;
+    }
+    
+    CGRect rect = CGRectMake(0, 0, K_APP_WIDTH, _h);
+    _navView = [[UIView alloc] initWithFrame:rect];
+    [_navView setBackgroundColor:backgroundColor];
+    
+    //底部线
+    if(line) {
+        _h = 1;
+        _y = _navView.frame.size.height - _h;
+        UIImageView *tempImg = [[UIImageView alloc] initWithFrame:CGRectMake(0, 0, K_APP_WIDTH, _h)];
+        tempImg.backgroundColor = K_APP_SPLIT_LINE_COLOR;
+        
+        [_navView addSubview:tempImg];
+    }
+    
+    //底部阴影
+    if(shadow) {
+        [Utils setViewShadowStyle:self.navView
+                   AndShadowColor:K_APP_VIEW_SHADOW_COLOR
+                 AndShadowOpacity:K_APP_VIEW_CELL_SHADOW_OPACITY
+                  AndShadowRadius:4.f
+                 WithShadowOffset:CGSizeMake(0, 0.8f)];
+    }
+
+    [self.view addSubview:_navView];
+}
+
+
+//MARK: - 右边按钮
+/** 设置右边按钮 */
+- (void)addRightBtnWithTitle:(NSString *)title
+                    andImage:(UIImage *)image
+{
+    UIButton *button = [UIButton buttonWithType:UIButtonTypeCustom];
+    button.frame = CGRectMake(K_APP_WIDTH - 44 -15, K_APP_STATUS_BAR_HEIGHT, 44, 44);
+    
+    if (image) {
+        [button setImage:image forState:UIControlStateNormal];
+    }
+    
+    if (title) {
+        [button setTitle:title forState:UIControlStateNormal];
+        [button setTitleColor:RGBCOLOR(18.0, 183.0, 245.0) forState:UIControlStateNormal];
+    }
+    
+    [button addTarget:self
+               action:@selector(rightAction)
+     forControlEvents:UIControlEventTouchUpInside];
+    
+    UIBarButtonItem *infoBtn = [[UIBarButtonItem alloc] initWithCustomView:button];
+    self.navigationItem.rightBarButtonItems = nil;
+    self.navigationItem.rightBarButtonItem = infoBtn;
+}
+
+- (void)rightAction {
+    ZWWLog(@"右边按钮点击了")
+}
+
+//MARK: - 初始化视图标题
+/** 视图标题 */
+-(void)initViewControllerTitle:(NSString *)strTitle
+                  AndFontColor:(UIColor *)fColor
+                    AndHasBold:(BOOL) hasBold AndFontSize:(CGFloat)fSize{
+
+    if (_navView == nil) {
+        [self initNavgationBar:K_APP_NAVIGATION_BACKGROUND_COLOR
+              AndHasBottomLine:YES
+                  AndHasShadow:NO
+                 WithHasOffset:0.f];
+    }
+    
+    _w = K_APP_WIDTH - 80;
+    _h = 21;
+    _y = (44 - _h) * 0.5 + ([[UIDevice currentDevice] isiPhoneX]?K_APP_IPHONX_TOP:20);
+    _x = (K_APP_WIDTH - _w) / 2.f;
+    _labPageTitle = [BaseUIView createLable:CGRectMake(_x, _y, _w, _h)
+                                        AndText:strTitle
+                                   AndTextColor:fColor
+                                     AndTxtFont:[UIFont systemFontOfSize:fSize]
+                             AndBackgroundColor:nil];
+    
+    _labPageTitle.textAlignment = NSTextAlignmentCenter;
+    _labPageTitle.textColor = fColor;
+    _labPageTitle.adjustsFontSizeToFitWidth = YES;
+    
+    //标题字体
+    if(!hasBold) {
+        _labPageTitle.font = [UIFont systemFontOfSize:fSize];
+    }
+    else{
+        _labPageTitle.font = [UIFont boldSystemFontOfSize:fSize];
+    }
+    
+    _labPageTitle.text = strTitle;
+    [self.view addSubview:_labPageTitle];
+
+}
+//MARK: - 初始化导航返回
+/** 设置返回按钮 */
+-(void)initNavigationBack:(NSString *)strBackImagName{
+    _w = 44;
+    _h = 44;
+    _x = 12;
+    _y = (44 - _h) * 0.5 + ([[UIDevice currentDevice] isiPhoneX]?K_APP_IPHONX_TOP:20);
+    _btnNavigationBack = [BaseUIView createBtn:CGRectMake(_x, _y, _w, _h)
+                                          AndTitle:nil
+                                     AndTitleColor:nil
+                                        AndTxtFont:nil
+                                          AndImage:[UIImage imageNamed:strBackImagName]
+                                AndbackgroundColor:nil
+                                    AndBorderColor:nil
+                                   AndCornerRadius:0.0
+                                      WithIsRadius:NO
+                               WithBackgroundImage:nil
+                                   WithBorderWidth:0];
+    
+    _btnNavigationBack.showsTouchWhenHighlighted = YES;
+    [_btnNavigationBack addTarget:self
+                           action:@selector(btnNavigationBackAction:)
+                 forControlEvents:UIControlEventTouchUpInside];
+    [self.view addSubview:_btnNavigationBack];
+}
+//返回
+-(IBAction)btnNavigationBackAction:(UIButton *)sender {
+    if ([self presentingViewController]) {
+        if ([[self parentViewController] isKindOfClass:[UINavigationController classForCoder]]) {
+            UIViewController *vc = [[self parentViewController] childViewControllers].firstObject;
+            if ([vc isKindOfClass:[UpLoadViewController class]]) {
+                [self dismissViewControllerAnimated:YES completion:nil];
+            }
+            else{
+                [self.navigationController popViewControllerAnimated:YES];
+            }
+        }
+        //present 进入
+        else{
+            [self dismissViewControllerAnimated:YES completion:nil];
+        }
+    }
+    else{
+        NSInteger count = [[self.navigationController childViewControllers] count];
+        if(count >= 2 && [[[self.navigationController childViewControllers] objectAtIndex:count-2] isKindOfClass:[FansViewController class]]){
+            [self.navigationController popToRootViewControllerAnimated:YES];
+        }
+        else
+           [self.navigationController popViewControllerAnimated:YES];
+    }
+}
+//MARK: - 视图滑动
+/** 视图滑动手势 */
+-(void)viewSwipeAnimatio{
+    if (super.tabBarController == nil) {
+        return;
+    }
+    UISwipeGestureRecognizer *swipeGesture = [[UISwipeGestureRecognizer alloc] initWithTarget:self action:@selector(swipeHandelAction:)];
+    swipeGesture.direction = UISwipeGestureRecognizerDirectionLeft;
+    [[super view] addGestureRecognizer:swipeGesture];
+    
+    swipeGesture = [[UISwipeGestureRecognizer alloc] initWithTarget:self action:@selector(swipeHandelAction:)];
+    swipeGesture.direction = UISwipeGestureRecognizerDirectionRight;
+    [[super view] addGestureRecognizer:swipeGesture];
+}
+
+-(IBAction)swipeHandelAction:(UISwipeGestureRecognizer *)sender{
+    //侧滑控制
+    BOOL isSwipe = [[NSUserDefaults standardUserDefaults] boolForKey:K_APP_LATERAL_SPREADS];
+    if (!isSwipe) {
+        return;
+    }
+    //初始化动画对象
+    CATransition *transition = [[CATransition alloc] init];
+    transition.type = kCATransitionPush;
+    transition.duration = 0.6;
+    
+    NSInteger countIndex = [[[super tabBarController] childViewControllers] count] - 1;
+    NSUInteger currentIndex = [[super tabBarController] selectedIndex];
+    //右滑
+    if (sender.direction == UISwipeGestureRecognizerDirectionRight) {
+        //滑动到前一个大栏目
+        if (currentIndex >= 1){
+            currentIndex -= 1;
+        }
+        else if (currentIndex == 0) {
+            //currentIndex = countIndex
+            return;
+        }
+        
+        transition.subtype = kCATransitionFromLeft;
+        [Utils tabBarChangeAnimation:[super tabBarController] WithDirection:0];
+        [super tabBarController].selectedIndex = currentIndex;
+    }
+    //左滑
+    else if(sender.direction == UISwipeGestureRecognizerDirectionLeft){
+        
+        //滑动到后一个大栏目
+        if (currentIndex < countIndex){
+            currentIndex += 1;
+        }
+        else if (currentIndex == countIndex) {
+            //currentIndex = 0
+            return;
+        }
+        else {
+            return;
+        }
+        
+        transition.subtype = kCATransitionFromRight;
+        [Utils tabBarChangeAnimation:[super tabBarController] WithDirection:1];
+        [super tabBarController].selectedIndex = currentIndex;
+    }
+    
+    //将动画追加到列表
+    [[[super view] layer] addAnimation:transition forKey:@"animation"];
+}
+
+
+//MARK: - 登录
+-(void)userToLogin:(__weak LoginViewControllerDelegate * _Nullable)delegate{
+    
+    LoginViewController *logVC = [[LoginViewController alloc] init];
+    if (delegate) {
+        logVC.delegate = (id<LoginViewControllerDelegate>)delegate;
+    }
+    
+    logVC.modalPresentationStyle = UIModalPresentationOverFullScreen;
+    [self presentViewController:logVC animated:YES completion:nil];
+}
+
+
+//MARK: - UIGestureRecognizerDelegate
+//防止点击事件与视图自带事件相冲突
+- (BOOL)gestureRecognizer:(UIGestureRecognizer *)gestureRecognizer shouldReceiveTouch:(UITouch *)touch{
+    
+    NSString *touchClass = NSStringFromClass(touch.view.classForCoder);
+    NSString *supClass = NSStringFromClass(touch.view.superview.superview.classForCoder);
+   
+    if ([touchClass hasPrefix:@"UITableView"] || [touchClass hasPrefix:@"UICollectionView"] ||
+        [supClass hasPrefix:@"UITableView"] || [supClass hasPrefix:@"UICollectionView"]) {
+        return NO;
+    }
+    
+    return YES;
+}
+@end

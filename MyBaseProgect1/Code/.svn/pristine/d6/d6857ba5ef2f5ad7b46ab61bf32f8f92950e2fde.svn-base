@@ -1,0 +1,94 @@
+//
+//  PopularizeView.m
+//  快猪
+//
+//  Created by 魏冰杰 on 2019/1/17.
+//  Copyright © 2019年 时磊. All rights reserved.
+//
+
+#import "PopularizeView.h"
+
+@interface PopularizeView ()
+
+@end
+
+@implementation PopularizeView
+
+- (void)awakeFromNib {
+    [super awakeFromNib];
+
+    self.topBgView.layer.cornerRadius = 5;
+    self.topBgView.layer.masksToBounds = YES;
+    
+    //二维码
+    self.labQRCode.transform = CGAffineTransformMakeRotation(M_PI_2);
+    
+    //底部描述
+    self.labDescription.attributedText = [[NSAttributedString alloc] initWithString:@"1、重复推广IP不计入统计\n2、历史累计推广到50人，每天观影次数是：20+250=270，每天下载次数是：10+100=110\n3、推广数量是可以累积的，但是观看数量是每天都清零的"];
+    self.labDescription.numberOfLines = 0;
+    
+    //图像圆角
+    self.userphoto.layer.cornerRadius = self.userphoto.frame.size.height * 0.5;
+    self.userphoto.layer.masksToBounds = YES;
+}
+
++ (instancetype)createPopularizeViewInit {
+    
+    NSArray *nibView = [[NSBundle mainBundle] loadNibNamed:NSStringFromClass([PopularizeView class]) owner:self options:nil];
+    
+    return [nibView objectAtIndex:0];
+}
+
+- (void)setFrame:(CGRect)frame {
+    [super setFrame:CGRectMake(0, 0, K_APP_WIDTH, 400)];
+}
+
+- (void)setModel:(PopularizeModel *)model {
+    _model = model;
+    
+    [self.userphoto sd_setImageWithURL:[NSURL URLWithString:model.userPhoto] placeholderImage:[UIImage imageNamed:@"main_user_default"]];
+    self.userName.text = model.userName;
+    
+    //今日可观看次数
+    self.seenCount.text = model.maxViewCount < 0 ? @"无限" :[NSString stringWithFormat:@"%lD",(long)model.maxViewCount];
+    
+    //观看剩余次数：maxViewCount - viewCount ,  maxViewCount为负值的时候为无限
+    NSInteger count = model.maxViewCount - model.viewCount;
+    self.residueCount.text = model.maxViewCount < 0 ? @"无限":[NSString stringWithFormat:@"%lD",(long)count];//观看剩余次数
+    self.invCoed.text = [NSString stringWithFormat:@"我的邀请码：%@",model.invCode];
+    
+    //当前等级
+    //NSPredicate *pre = [NSPredicate predicateWithFormat:@"%K == %@",@"lvName",model.curLvName];
+    //lvList *lvModel = [model.lvList filteredArrayUsingPredicate:pre].firstObject;
+    self.lvLeft.text = model.curLvName;
+    [self.curIvIcon sd_setImageWithURL:[NSURL URLWithString:model.curlvIcon]];
+    
+    //下一级别
+    NSString *strInfo;
+    /*
+    NSInteger index = [model.lvList indexOfObject:lvModel];
+    if (index + 1 < [model.lvList count]) {
+        strInfo = model.lvList[index+1].lvDesc;
+        self.lvRight.text = model.lvList[index+1].lvName;
+        [self.nextLvIcon sd_setImageWithURL:[NSURL URLWithString:model.lvList[index+1].lvIcon]];
+    }
+    else{
+        strInfo = model.lvList.lastObject.lvDesc;
+        self.lvRight.text = model.lvList.lastObject.lvName;
+        [self.nextLvIcon sd_setImageWithURL:[NSURL URLWithString:model.lvList.lastObject.lvIcon]];
+    }
+     */
+    self.lvRight.text = model.nextLvName;
+    [self.nextLvIcon sd_setImageWithURL:[NSURL URLWithString:model.nextLvIcon]];
+    
+    //距离下一等级的人数
+    strInfo = @"下一等级还差1人";
+    if (model) {
+        strInfo = [NSString stringWithFormat:@"下一等级还差%lD人",(long)model.expToNextLv];
+    }
+    self.lvNO.text = strInfo;
+    
+}
+
+
+@end

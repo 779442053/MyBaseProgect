@@ -1,0 +1,72 @@
+# Uncomment the next line to define a global platform for your project
+ platform :ios, '9.0'
+
+target 'KuaiZhu' do
+  # Uncomment the next line if you're using Swift or would like to use dynamic frameworks
+  # use_frameworks!
+
+  # Pods for KuaiZhu
+
+  #网络请求
+  pod 'AFNetworking', '~> 3.1.0'
+  
+  #键盘提示
+  pod 'IQKeyboardManager', '~> 4.0.8'
+  
+  #刷新动画
+  pod 'MJRefresh','~> 3.1.10'
+  
+  #无限循环轮播视图
+  pod 'TYCyclePagerView'
+  
+  #数组、字典与模型互转
+  pod 'MJExtension', '~> 3.0.13'
+
+  #模态框
+  pod 'MBProgressHUD', '~> 1.0.0'
+  
+  #加载Gif
+  pod 'FLAnimatedImage', '~> 1.0'
+
+  #视频播放
+  pod 'ZFPlayer', '~> 3.0'
+  pod 'ZFPlayer/ControlView', '~> 3.0'
+  pod 'ZFPlayer/AVPlayer', '~> 3.0'
+  
+  #布局约束
+  pod 'Masonry'
+  
+  #FMDB数据库
+  pod 'FMDB','~> 2.6.2'
+  
+  #腾讯Bugly 测试sdk
+  pod 'Bugly'
+
+  #列表侧滑
+  #pod 'SWTableViewCell', '~> 0.3.7'
+  
+  #图片加载
+  pod 'SDWebImage'
+  pod 'YYKit'
+  #各种导航栏
+  pod 'WRNavigationBar', '~>1.2.0'
+
+  pod 'ReactiveObjC', '~> 2.1.0'
+
+  pod 'UMCCommon'
+  pod 'UMCAnalytics'
+
+
+
+
+  target 'KuaiZhuTests' do
+    inherit! :search_paths
+    # Pods for testing
+  end
+
+  target 'KuaiZhuUITests' do
+    inherit! :search_paths
+    # Pods for testing
+  end
+
+end

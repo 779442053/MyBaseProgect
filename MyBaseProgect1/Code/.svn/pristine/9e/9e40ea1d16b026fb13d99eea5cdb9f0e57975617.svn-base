@@ -1,0 +1,24 @@
+//
+//  MyPromoteViewController.h
+//  KuaiZhu
+//
+//  Created by apple on 2019/6/11.
+//  Copyright © 2019 su. All rights reserved.
+//
+
+#import <UIKit/UIKit.h>
+@class PopularizeModel;
+
+NS_ASSUME_NONNULL_BEGIN
+
+/**
+ * 我的推广
+ */
+@interface MyPromoteViewController : BaseViewController
+
+/** 传值指定(不为空) */
+@property (nonatomic, strong, nonnull) PopularizeModel *popularizeModel;
+
+@end
+
+NS_ASSUME_NONNULL_END

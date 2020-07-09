@@ -1,0 +1,187 @@
+//
+//  JSNewShareVC.m
+//  kToutiao
+//
+//  Created by jasonguo on 2019/4/19.
+//  Copyright © 2019 时磊. All rights reserved.
+//
+
+#import "JSNewShareVC.h"
+#import "JSShareView.h"
+#import "PopularizeModel.h"
+
+@interface JSNewShareVC ()
+@property (nonatomic, strong) PopularizeModel *popularizeModel;
+@end
+
+@implementation JSNewShareVC
+
+- (void)viewDidLoad {
+    [super viewDidLoad];
+    
+    //MARK:导航
+    [self initNavgationBar:K_APP_NAVIGATION_BACKGROUND_COLOR
+          AndHasBottomLine:NO
+              AndHasShadow:YES
+             WithHasOffset:0.0];
+    
+    //MARK:返回
+    [self initNavigationBack:K_APP_BLACK_BACK];
+    
+    //MARK:标题
+    [self initViewControllerTitle:@"推荐好友"
+                     AndFontColor:K_APP_VIEWCONTROLLER_TITLE_COLOR
+                       AndHasBold:NO
+                      AndFontSize:K_APP_VIEWCONTROLLER_TITLE_FONT];
+    
+    [self getCodeData];
+}
+
+- (void)viewWillAppear:(BOOL)animated {
+    [super viewWillAppear:animated];
+}
+
+
+//MARK: - initUI
+- (void)initUI{
+    
+    UIScrollView *scroll=[[UIScrollView alloc]initWithFrame:CGRectMake(0, K_APP_NAVIGATION_BAR_HEIGHT, K_APP_WIDTH, K_APP_HEIGHT-K_APP_NAVIGATION_BAR_HEIGHT)];
+    scroll.contentSize = CGSizeMake(K_APP_WIDTH, 1050);
+    scroll.showsVerticalScrollIndicator = NO;
+    scroll.backgroundColor = [UIColor colorWithHexString:@"#FF6600"];
+    [self.view addSubview:scroll];
+    
+    UIImageView *imagebg = [[UIImageView alloc]initWithImage:[UIImage imageNamed:@"share_bg"]];
+    [scroll addSubview:imagebg];
+    [imagebg mas_makeConstraints:^(MASConstraintMaker *make) {
+        make.top.mas_equalTo(0);
+        make.centerX.mas_equalTo(scroll);
+        make.width.mas_equalTo(K_APP_WIDTH);
+        make.height.mas_equalTo(197);
+    }];
+    
+    UILabel *label1 = [[UILabel alloc] init];
+    [scroll addSubview:label1];
+    label1.text = @"【分享视频地址获取更多观影次数】";
+    label1.textColor = [UIColor whiteColor];
+    label1.font = [UIFont fontWithName:@"Microsoft YaHe" size:17];
+    [label1 mas_makeConstraints:^(MASConstraintMaker *make) {
+        make.top.mas_equalTo(41);
+        make.left.mas_equalTo(18);
+    }];
+    
+    UIView *view33 = [[UIView alloc] init];
+    view33.backgroundColor = [UIColor colorWithRed:251/255.0 green:241/255.0 blue:174/255.0 alpha:1.0];
+    view33.layer.cornerRadius = 8.3;
+    [scroll addSubview:view33];
+    [view33 mas_makeConstraints:^(MASConstraintMaker *make) {
+        make.top.mas_equalTo(82);
+        make.left.mas_equalTo(19);
+        make.width.mas_equalTo(128);
+        make.height.mas_equalTo(21);
+    }];
+    
+    UILabel *label2 = [[UILabel alloc] init];
+    [scroll addSubview:label2];
+    label2.text = @"邀请1位好友次数增加";
+    label2.textColor = [UIColor colorWithHexString:@"#F82B32"];
+    label2.font = [UIFont fontWithName:@"Microsoft YaHei" size:12];
+    [label2 mas_makeConstraints:^(MASConstraintMaker *make) {
+        make.top.mas_equalTo(83.5);
+        make.left.mas_equalTo(23);
+    }];
+    
+    JSShareView *shareView1 = [JSShareView starShareView];
+    [scroll addSubview:shareView1];
+    shareView1.center = scroll.center;
+    shareView1.y = imagebg.height+20;
+    shareView1.layer.cornerRadius = 13.3;
+    [shareView1.btn11 addTarget:self action:@selector(copyBtnClick) forControlEvents:UIControlEventTouchUpInside];
+    shareView1.popularizeModel = self.popularizeModel;
+    
+    
+    UIView *btnView = [[UIView alloc] init];
+    btnView.backgroundColor = [UIColor whiteColor];
+    [scroll addSubview:btnView];
+    [btnView mas_makeConstraints:^(MASConstraintMaker *make) {
+        make.bottom.offset(1050);
+        make.left.mas_equalTo(1);
+        make.width.mas_equalTo(K_APP_WIDTH-2);
+        make.height.mas_equalTo(79.7);
+    }];
+    
+    UIButton *sharBtn = [[UIButton alloc]init];
+    [sharBtn setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
+    sharBtn.titleLabel.font = FONT(17);
+    [sharBtn setTitle:@"快速分享" forState:UIControlStateNormal];
+    [sharBtn.layer setCornerRadius:25];
+    [sharBtn setBackgroundColor:[UIColor colorWithHexString:@"#FF6726"]];
+    [scroll addSubview:sharBtn];
+    
+    [sharBtn mas_makeConstraints:^(MASConstraintMaker *make) {
+        make.center.mas_equalTo(btnView);
+        make.width.mas_equalTo(300);
+        make.height.mas_equalTo(50);
+    }];
+    
+    [sharBtn addTarget:self action:@selector(shareBtnClick) forControlEvents:UIControlEventTouchUpInside];
+}
+
+
+//MARK: -  request
+- (void)getCodeData {
+    
+    __block typeof(self) blockSelf = self;
+    __weak typeof(self) weakSelf = self;
+    [Utils loadTuiGuangDataWithParams:nil
+                        andFinishBack:^(id  _Nullable responseData, NSString * _Nullable strMsg) {
+                            
+                            if (responseData) {
+                                blockSelf->_popularizeModel = [PopularizeModel mj_objectWithKeyValues:responseData];
+                                
+                                [weakSelf initUI];
+                            }
+                            else{
+                                [MBProgressHUD showError:strMsg];
+                            }
+                        }
+                           AndisLogin:YES];
+}
+
+
+-(void) copyBtnClick{
+    UIPasteboard *pasteBoard = [UIPasteboard generalPasteboard];
+    pasteBoard.string = [NSString stringWithFormat:@"%@?%@",_popularizeModel.shareUrl,K_APP_SHARE_INFO];
+    if (self.strShareCopyUrl && ![self.strShareCopyUrl isEqualToString:@""]){
+        pasteBoard.string = self.strShareCopyUrl;
+        
+        if (![pasteBoard.string containsString:K_APP_SHARE_INFO]) {
+            pasteBoard.string = [NSString stringWithFormat:@"%@%@%@",self.strShareCopyUrl,[self.strShareCopyUrl containsString:@"?"]?@"&":@"?",K_APP_SHARE_INFO];
+        }
+    }
+    
+    [MBProgressHUD showInfo:@"已复制到剪切板"];
+}
+
+- (void)shareBtnClick{
+    NSString *itunesAddress = [NSString stringWithFormat:@"%@?%@",_popularizeModel.shareUrl,K_APP_SHARE_INFO];;
+    
+    if (self.strShareUrl && ![self.strShareUrl isEqualToString:@""]){
+        itunesAddress = self.strShareUrl;
+        
+        if (![itunesAddress containsString:K_APP_SHARE_INFO]) {
+            itunesAddress = [NSString stringWithFormat:@"%@%@%@",self.strShareUrl,[self.strShareUrl containsString:@"?"]?@"&":@"?",K_APP_SHARE_INFO];
+        }
+    }
+    
+    __weak typeof(self) weakSelf = self;
+    [Utils wxExtensionShareURL:itunesAddress
+                       AndBack:^(UIActivityViewController *activityVC) {
+                           [weakSelf presentViewController:activityVC
+                                                  animated:YES completion:nil];
+                       }];
+}
+
+
+
+@end

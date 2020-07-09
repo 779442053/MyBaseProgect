@@ -1,0 +1,31 @@
+//
+//  StaticTaskModel.h
+//  KuaiZhu
+//
+//  Created by Ghy on 2019/5/15.
+//  Copyright © 2019年 su. All rights reserved.
+//
+
+#import <Foundation/Foundation.h>
+
+NS_ASSUME_NONNULL_BEGIN
+
+/**
+ * 推广任务模型
+ */
+@interface StaticTaskModel : NSObject
+
+/** 参数名称【领取网赚任务红包接口中有使用（GiveRedpacketsTask）】 */
+@property(nonatomic,  copy) NSString *Key;
+@property(nonatomic,assign) NSInteger Value;
+/** 活动说明 */
+@property(nonatomic,  copy) NSString *Intro;
+/** 活动标题 */
+@property(nonatomic,  copy) NSString *Title;
+@property(nonatomic,  copy) NSString *IsUserEditable;
+/** 参数类型【1：奖励类型；2：赚钱提示；3：次数设置】 */
+@property(nonatomic,assign) NSInteger ParameterType;
+
+@end
+
+NS_ASSUME_NONNULL_END

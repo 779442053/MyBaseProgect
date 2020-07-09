@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.XIB" version="3.0" toolsVersion="14490.70" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" useSafeAreas="YES" colorMatched="YES">
+    <device id="retina6_1" orientation="portrait">
+        <adaptation id="fullscreen"/>
+    </device>
+    <dependencies>
+        <deployment identifier="iOS"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="14490.49"/>
+        <capability name="Safe area layout guides" minToolsVersion="9.0"/>
+        <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
+    </dependencies>
+    <objects>
+        <placeholder placeholderIdentifier="IBFilesOwner" id="-1" userLabel="File's Owner"/>
+        <placeholder placeholderIdentifier="IBFirstResponder" id="-2" customClass="UIResponder"/>
+        <tableViewCell contentMode="scaleToFill" selectionStyle="none" indentationWidth="10" reuseIdentifier="JSTuiguangListCell" id="KGk-i7-Jjw" customClass="JSTuiguangListCell">
+            <rect key="frame" x="0.0" y="0.0" width="320" height="44"/>
+            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+            <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" tableViewCell="KGk-i7-Jjw" id="H2p-sc-9uM">
+                <rect key="frame" x="0.0" y="0.0" width="320" height="43.5"/>
+                <autoresizingMask key="autoresizingMask"/>
+                <subviews>
+                    <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="13876631231" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="LdU-dQ-tMU">
+                        <rect key="frame" x="0.0" y="0.0" width="106.5" height="43.5"/>
+                        <fontDescription key="fontDescription" type="system" pointSize="14"/>
+                        <color key="textColor" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                        <nil key="highlightedColor"/>
+                    </label>
+                    <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="2019.03.12" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="VZb-WC-Qij">
+                        <rect key="frame" x="106.5" y="0.0" width="107" height="43.5"/>
+                        <fontDescription key="fontDescription" type="system" pointSize="14"/>
+                        <color key="textColor" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                        <nil key="highlightedColor"/>
+                    </label>
+                    <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="已注册" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="xxt-nF-KmV">
+                        <rect key="frame" x="213.5" y="0.0" width="106.5" height="43.5"/>
+                        <fontDescription key="fontDescription" type="system" pointSize="14"/>
+                        <color key="textColor" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                        <nil key="highlightedColor"/>
+                    </label>
+                </subviews>
+                <constraints>
+                    <constraint firstAttribute="bottom" secondItem="VZb-WC-Qij" secondAttribute="bottom" id="7gF-vS-BHr"/>
+                    <constraint firstItem="VZb-WC-Qij" firstAttribute="width" secondItem="H2p-sc-9uM" secondAttribute="width" multiplier="0.333333" id="Ald-Yf-ogJ"/>
+                    <constraint firstAttribute="bottom" secondItem="LdU-dQ-tMU" secondAttribute="bottom" id="IqC-1C-6Pd"/>
+                    <constraint firstItem="LdU-dQ-tMU" firstAttribute="leading" secondItem="H2p-sc-9uM" secondAttribute="leading" id="OQW-2k-vy4"/>
+                    <constraint firstItem="xxt-nF-KmV" firstAttribute="width" secondItem="H2p-sc-9uM" secondAttribute="width" multiplier="0.333333" id="RKw-qV-Rgt"/>
+                    <constraint firstItem="VZb-WC-Qij" firstAttribute="leading" secondItem="LdU-dQ-tMU" secondAttribute="trailing" id="Ylh-Tw-vNj"/>
+                    <constraint firstAttribute="bottom" secondItem="xxt-nF-KmV" secondAttribute="bottom" id="ZFm-Xc-LCR"/>
+                    <constraint firstItem="LdU-dQ-tMU" firstAttribute="top" secondItem="H2p-sc-9uM" secondAttribute="top" id="e6X-BW-uQ8"/>
+                    <constraint firstItem="LdU-dQ-tMU" firstAttribute="width" secondItem="H2p-sc-9uM" secondAttribute="width" multiplier="0.333333" id="j8a-Gn-LrC"/>
+                    <constraint firstItem="xxt-nF-KmV" firstAttribute="leading" secondItem="VZb-WC-Qij" secondAttribute="trailing" id="jVC-bV-KpT"/>
+                    <constraint firstItem="xxt-nF-KmV" firstAttribute="top" secondItem="H2p-sc-9uM" secondAttribute="top" id="kkr-u8-ddk"/>
+                    <constraint firstItem="VZb-WC-Qij" firstAttribute="top" secondItem="H2p-sc-9uM" secondAttribute="top" id="rzQ-Mk-EOY"/>
+                </constraints>
+            </tableViewCellContentView>
+            <viewLayoutGuide key="safeArea" id="aW0-zy-SZf"/>
+            <connections>
+                <outlet property="nickNameLab" destination="LdU-dQ-tMU" id="u88-4o-4oi"/>
+                <outlet property="statusLab" destination="xxt-nF-KmV" id="meS-0P-cY8"/>
+                <outlet property="timeLab" destination="VZb-WC-Qij" id="OGN-Y2-q7K"/>
+            </connections>
+        </tableViewCell>
+    </objects>
+</document>

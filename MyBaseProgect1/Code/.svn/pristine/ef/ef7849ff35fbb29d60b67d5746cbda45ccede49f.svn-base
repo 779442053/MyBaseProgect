@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="14490.70" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" launchScreen="YES" useSafeAreas="YES" colorMatched="YES" initialViewController="01J-lp-oVM">
+    <device id="retina5_9" orientation="portrait">
+        <adaptation id="fullscreen"/>
+    </device>
+    <dependencies>
+        <deployment identifier="iOS"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="14490.49"/>
+        <capability name="Safe area layout guides" minToolsVersion="9.0"/>
+        <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
+    </dependencies>
+    <scenes>
+        <!--View Controller-->
+        <scene sceneID="EHf-IW-A2E">
+            <objects>
+                <viewController storyboardIdentifier="LaunchScreen" id="01J-lp-oVM" sceneMemberID="viewController">
+                    <view key="view" contentMode="scaleToFill" id="Ze5-6b-2t3">
+                        <rect key="frame" x="0.0" y="0.0" width="375" height="812"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <subviews>
+                            <imageView autoresizesSubviews="NO" userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="launch_1242_2280.png" translatesAutoresizingMaskIntoConstraints="NO" id="ndJ-Eb-OFv">
+                                <rect key="frame" x="0.0" y="0.0" width="375" height="812"/>
+                                <accessibility key="accessibilityConfiguration">
+                                    <accessibilityTraits key="traits" image="YES" notEnabled="YES"/>
+                                </accessibility>
+                            </imageView>
+                        </subviews>
+                        <color key="backgroundColor" red="1" green="1" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                        <constraints>
+                            <constraint firstItem="ndJ-Eb-OFv" firstAttribute="top" secondItem="Ze5-6b-2t3" secondAttribute="top" id="DPQ-V2-Wmu"/>
+                            <constraint firstItem="ndJ-Eb-OFv" firstAttribute="leading" secondItem="FL9-BO-Hfe" secondAttribute="leading" id="Tbf-oZ-g2j"/>
+                            <constraint firstItem="FL9-BO-Hfe" firstAttribute="trailing" secondItem="ndJ-Eb-OFv" secondAttribute="trailing" id="kCC-nw-Okn"/>
+                            <constraint firstAttribute="bottom" secondItem="ndJ-Eb-OFv" secondAttribute="bottom" id="v2f-CE-0V3"/>
+                        </constraints>
+                        <viewLayoutGuide key="safeArea" id="FL9-BO-Hfe"/>
+                    </view>
+                </viewController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="iYj-Kq-Ea1" userLabel="First Responder" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="-129" y="338"/>
+        </scene>
+    </scenes>
+    <resources>
+        <image name="launch_1242_2280.png" width="414" height="736"/>
+    </resources>
+</document>

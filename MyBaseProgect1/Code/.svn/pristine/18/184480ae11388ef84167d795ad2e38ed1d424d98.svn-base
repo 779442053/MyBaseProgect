@@ -1,0 +1,176 @@
+//
+//  ConfigViewController.m
+//  KuaiZhu
+//
+//  Created by apple on 2019/5/27.
+//  Copyright © 2019 su. All rights reserved.
+//
+
+#import "ConfigViewController.h"
+
+
+static CGFloat const k_margin = 20;
+static CGFloat const k_view_height = 40;
+static CGFloat const text_filed_margin_left = 0;
+static CGFloat const k_top_margin = 25;
+#define TextColor [[UIColor alloc] colorFromHexInt:0x999999 AndAlpha:1.0]
+
+@interface ConfigViewController ()<UITextFieldDelegate>
+
+@property(nonatomic, strong) ANCustomTextField *txtHost;
+
+@property(nonatomic, strong) UIButton *btnSubmit;
+@property(nonatomic, strong) UIButton *btnReset;
+
+@end
+
+@implementation ConfigViewController
+
+- (void)viewDidLoad {
+    [super viewDidLoad];
+    
+    // Do any additional setup after loading the view.
+    [self initView];
+}
+
+
+//MARK: - initView
+-(void)initView{
+    //MARK:导航
+    [self initNavgationBar:K_APP_NAVIGATION_BACKGROUND_COLOR
+          AndHasBottomLine:NO
+              AndHasShadow:NO
+             WithHasOffset:0.0];
+    
+    //MARK:返回
+    [self initNavigationBack:K_APP_BLACK_BACK];
+    
+    //MARK:标题
+    [self initViewControllerTitle:@"服务配置"
+                     AndFontColor:K_APP_VIEWCONTROLLER_TITLE_COLOR
+                       AndHasBold:NO
+                      AndFontSize:K_APP_VIEWCONTROLLER_TITLE_FONT];
+    
+    [self.view addSubview:self.txtHost];
+    [self.view addSubview:self.btnSubmit];
+    [self.view addSubview:self.btnReset];
+}
+
+
+-(ANCustomTextField *)txtHost{
+    if (!_txtHost) {
+        CGFloat y = K_APP_NAVIGATION_BAR_HEIGHT + 45;
+        CGRect rect = CGRectMake(k_margin,y , K_APP_WIDTH - 2 * k_margin, k_view_height);
+        _txtHost = [[ANCustomTextField alloc] initWithFrame:rect];
+        _txtHost.text = K_APP_HOST;
+        _txtHost.keyboardType = UIKeyboardTypeURL;
+        _txtHost.returnKeyType = UIReturnKeyNext;
+        
+        _txtHost.delegate = self;
+        _txtHost.borderStyle = UITextBorderStyleRoundedRect;
+        _txtHost.leftPadding = text_filed_margin_left;
+        
+        //显示清除按钮
+        _txtHost.clearButtonMode = UITextFieldViewModeWhileEditing;
+        
+        _txtHost.placeholder = @"服务器接口地址";
+        _txtHost.textColor = TextColor;
+        _txtHost.font = FONTOFPX(28);
+    }
+    return _txtHost;
+}
+
+-(UIButton *)btnSubmit{
+    if (!_btnSubmit) {
+        CGRect rect = self.txtHost.frame;
+        rect.origin.y += rect.size.height + 2 * k_top_margin;
+        
+        _btnSubmit = [BaseUIView createBtn:rect
+                                 AndTitle:@"提交修改"
+                            AndTitleColor:[UIColor whiteColor]
+                               AndTxtFont:FONTOFPX(36)
+                                 AndImage:nil
+                       AndbackgroundColor:[[UIColor alloc] colorFromHexInt:0xFF6726 AndAlpha:1.0]
+                           AndBorderColor:nil
+                          AndCornerRadius:20.0
+                             WithIsRadius:YES
+                      WithBackgroundImage:nil
+                          WithBorderWidth:0.0];
+        
+        [_btnSubmit addTarget:self action:@selector(btnChangeAction:) forControlEvents:UIControlEventTouchUpInside];
+    }
+    return _btnSubmit;
+}
+
+-(UIButton *)btnReset{
+    if (!_btnReset) {
+        CGRect rect = self.btnSubmit.frame;
+        rect.origin.y += rect.size.height + k_top_margin;
+        
+        _btnReset = [BaseUIView createBtn:rect
+                                    AndTitle:@"重置服务"
+                               AndTitleColor:[UIColor whiteColor]
+                                  AndTxtFont:FONTOFPX(36)
+                                    AndImage:nil
+                          AndbackgroundColor:[[UIColor alloc] colorFromHexInt:0x159AF8 AndAlpha:1.0]
+                              AndBorderColor:nil
+                             AndCornerRadius:20.0
+                                WithIsRadius:YES
+                         WithBackgroundImage:nil
+                             WithBorderWidth:0.0];
+        
+        [_btnReset addTarget:self action:@selector(btnChangeAction:) forControlEvents:UIControlEventTouchUpInside];
+    }
+    return _btnReset;
+}
+
+
+//MARK: - 修改服务
+-(IBAction)btnChangeAction:(UIButton *)sender{
+    
+    NSString *strHost;
+    
+    //MARK:修改
+    if (sender == self.btnSubmit) {
+        strHost = self.txtHost.text;
+        
+        if (![Utils checkTextEmpty:strHost]) {
+            [MBProgressHUD showError:@"地址不为空,请正确输入"];
+            return;
+        }
+        
+        [MBProgressHUD showInfo:@"服务配置修改成功"];
+    }
+    //MARK:重置
+    else{
+        strHost = [[[NSBundle mainBundle] infoDictionary] valueForKey:@"AppConfigUrl"];
+        self.txtHost.text = strHost;
+        
+        [MBProgressHUD showInfo:@"已重置为默认配置"];
+    }
+    
+    [[NSUserDefaults standardUserDefaults] setValue:strHost forKey:K_APP_CONFIG_KEY];
+    [[NSUserDefaults standardUserDefaults] synchronize];
+    
+    dispatch_after(DISPATCH_TIME_NOW + 0.35, dispatch_get_main_queue(), ^{
+        [self.navigationController popViewControllerAnimated:YES];
+    });
+}
+
+
+//MARK: - UITextFieldDelegate
+-(BOOL)textField:(UITextField *)textField shouldChangeCharactersInRange:(NSRange)range replacementString:(NSString *)string{
+    // [S] 禁止用户切换键盘为Emoji表情
+    if (textField.isFirstResponder) {
+        if ([textField.textInputMode.primaryLanguage isEqual:@"emoji"] || textField.textInputMode.primaryLanguage == nil) {
+            return NO;
+        }
+    }
+    // [E] 禁止用户切换键盘为Emoji表情
+    
+    //NSUInteger length = textField.text.length;
+    //NSUInteger strLength = string.length;
+    
+    return YES;
+}
+@end

@@ -1,0 +1,37 @@
+//
+//  ApplicationTableViewCell.h
+//  KuaiZhu
+//
+//  Created by Ghy on 2019/5/15.
+//  Copyright © 2019年 su. All rights reserved.
+//
+
+#import <UIKit/UIKit.h>
+
+@class StaticTaskModel;
+
+NS_ASSUME_NONNULL_BEGIN
+
+/**
+ * 网赚自定义列
+ */
+@interface ApplicationTableViewCell : UITableViewCell
+
+@property(nonatomic,strong) UILabel *labTitle;
+@property(nonatomic,strong) UILabel *labDescription;
+
+@property(nonatomic,strong) UIImageView *imgIcon;
+@property(nonatomic,strong) UIButton *btnIcon;
+@property(nonatomic,strong) UIButton *btnRight;
+
+-(void)initCellBindData:(StaticTaskModel *)model AndTitle:(NSString *)strRight;
+
+/** 列标识 */
++(NSString *)cellIdentify;
+
+/** 列高度 */
++(CGFloat)cellHeight;
+
+@end
+
+NS_ASSUME_NONNULL_END

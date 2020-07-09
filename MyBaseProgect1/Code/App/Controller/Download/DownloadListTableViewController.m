@@ -1,0 +1,390 @@
+//
+//  DownloadListTableViewController.m
+//  KuaiZhu
+//
+//  Created by apple on 2019/5/21.
+//  Copyright © 2019 su. All rights reserved.
+//
+
+#import "DownloadListTableViewController.h"
+
+#import "WaterfallLayout.h"
+#import "UploadVideosCollectionCell.h"//我的作品
+
+
+#import <ZFPlayer/ZFPlayer.h>
+#import <ZFPlayer/ZFPlayerControlView.h>
+#import <ZFAVPlayerManager.h>
+
+#import "DownloadViewController.h"
+#import "ZWDownloadModel.h"
+
+
+@interface DownloadListTableViewController ()<UICollectionViewDelegate,UICollectionViewDataSource,UICollectionViewDelegateFlowLayout,WaterfallLayoutDelegate,DownloadTableViewControllerDelegate>
+
+@property(nonatomic,   copy) NSArray *arrListData;
+@property(nonatomic, strong) UIView *emptyView;
+
+///////////////////////////////////////////////
+
+@property (nonatomic, strong) UIView *movePlayView;
+@property (nonatomic, strong) UIButton *backBtn;
+
+@property (nonatomic, strong) ZFPlayerController *player;
+@property (nonatomic, strong) ZFAVPlayerManager *playManager;
+@property (nonatomic, strong) ZFPlayerControlView *controlView;
+
+@property(nonatomic, strong) WaterfallLayout *wlayout;
+
+@end
+static NSString * const newsCellIdentifier = @"UploadVideosCollectionCell";
+static CGFloat const cell_margin = 3;
+@implementation DownloadListTableViewController
+- (instancetype)initWithType:(NSString *)strType{
+    _strType = strType;
+    if(self = [super initWithCollectionViewLayout:self.wlayout]){
+    }
+    return self;
+}
+
+- (void)viewDidLoad {
+    [super viewDidLoad];
+
+    [self.collectionView registerNib:[UINib nibWithNibName:@"UploadVideosCollectionCell" bundle:nil] forCellWithReuseIdentifier:newsCellIdentifier];
+    self.collectionView.delegate = self;
+    self.collectionView.dataSource = self;
+    self.collectionView.backgroundColor = [UIColor whiteColor];
+    [self.collectionView addSubview:self.emptyView];
+
+
+    __weak typeof(self) weakSelf = self;
+    //MARK:下拉刷新
+    weakSelf.collectionView.mj_header = [MJRefreshNormalHeader headerWithRefreshingBlock:^{
+        [weakSelf loadListData];
+    }];
+    [weakSelf.collectionView.mj_header beginRefreshing];
+}
+//MARK: - 空视图
+-(UIView *)emptyView{
+    if (!_emptyView) {
+        CGFloat h = 150;
+        CGFloat y = (K_APP_HEIGHT - K_APP_NAVIGATION_BAR_HEIGHT - h) * 0.5;
+        CGFloat w = 100;
+        CGFloat x = (K_APP_WIDTH - w) * 0.5;
+        _emptyView = [[UIView alloc] initWithFrame:CGRectMake(x, y, w, h)];
+        
+        //MARK:图片
+        w = 85;
+        h = 103;
+        x = (_emptyView.frame.size.width - w) * 0.5;
+        CGRect rect = CGRectMake(x, 0, w, h);
+        UIImageView *imgBg = [BaseUIView createImage:rect
+                                            AndImage:[UIImage imageNamed:@"search_empty_img.png"] AndBackgroundColor:nil WithisRadius:NO];
+        [_emptyView addSubview:imgBg];
+        
+        //MARK:标题
+        h = 21;
+        w = _emptyView.frame.size.width;
+        x = 0;
+        y = _emptyView.frame.size.height - h - 20;
+        UILabel *labInfo = [BaseUIView createLable:CGRectMake(x, y, w, h)
+                                           AndText:@"暂无数据显示"
+                                      AndTextColor:K_APP_TINT_COLOR
+                                        AndTxtFont:[UIFont systemFontOfSize:16]
+                                AndBackgroundColor:nil];
+        labInfo.textAlignment = NSTextAlignmentCenter;
+        [_emptyView addSubview:labInfo];
+        
+        //默认隐藏
+        [_emptyView setHidden:YES];
+    }
+    return _emptyView;
+}
+
+-(UIView *)movePlayView{
+    if (!_movePlayView) {
+        __weak typeof(self) weakSelf = self;
+        _movePlayView = [[UIView alloc] initWithFrame:[UIScreen mainScreen].bounds];
+        
+        [_movePlayView addSubview:weakSelf.controlView];
+    }
+    return _movePlayView;
+}
+
+-(UIButton *)backBtn{
+    
+    if (!_backBtn) {
+        CGFloat w = 40;
+        CGFloat h = 40;
+        CGFloat x = K_APP_WIDTH - w - 20;
+        CGFloat y = [[UIDevice currentDevice] isiPhoneX] ? K_APP_IPHONX_TOP : 20.0;
+        CGRect rect = CGRectMake(x, y, w, h);
+        _backBtn = [BaseUIView createBtn:rect
+                                 AndTitle:@""
+                            AndTitleColor:nil
+                               AndTxtFont:nil
+                                 AndImage:[UIImage imageNamed:@"nav_right_close_white.png"]
+                       AndbackgroundColor:nil
+                          AndBorderColor:nil
+                          AndCornerRadius:0
+                             WithIsRadius:NO
+                      WithBackgroundImage:nil
+                         WithBorderWidth:0];
+        
+        [_backBtn addTarget:self action:@selector(backHome:) forControlEvents:UIControlEventTouchUpInside];
+    }
+    return _backBtn;
+}
+
+-(ZFPlayerController *)player{
+    if (!_player) {
+        __weak typeof(self) weakSelf = self;
+        _player = [ZFPlayerController playerWithPlayerManager:weakSelf.playManager containerView:weakSelf.movePlayView];
+        _player.controlView = weakSelf.controlView;
+        
+        //移动网络依然自动播放(默认NO)
+        _player.WWANAutoPlay = NO;
+        
+        //自动播放
+        _player.shouldAutoPlay = NO;
+        
+        //播放停止之后重置播放器
+        _player.playerDidToEnd = ^(id  _Nonnull asset) {
+            [weakSelf.player stopCurrentPlayingCell];
+        };
+    }
+    return _player;
+}
+
+-(ZFAVPlayerManager *)playManager{
+    if (!_playManager) {
+        _playManager = [[ZFAVPlayerManager alloc] init];
+    }
+    return _playManager;
+}
+
+- (ZFPlayerControlView *)controlView {
+    if (!_controlView) {
+        _controlView = [[ZFPlayerControlView alloc] init];
+    }
+    return _controlView;
+}
+
+
+//MARK: - 返回
+-(IBAction)backHome:(UIButton *)sender{
+    [UIView animateWithDuration:0.35 animations:^{
+        self.backBtn.transform = CGAffineTransformMakeRotation(M_PI);
+    } completion:^(BOOL finished) {
+        if (finished) {
+            self.backBtn.transform = CGAffineTransformMakeRotation(0);
+            
+            [self.playManager stop];
+            [self.movePlayView removeFromSuperview];
+            [self.backBtn removeFromSuperview];
+            
+            self.playManager = nil;
+            self.player = nil;
+            self.controlView = nil;
+        }
+    }];
+}
+//MARK: - request
+-(void)loadListData{
+    NSArray *arrTemp = [[FMDBUtils shareInstance] getAllValuesFromTable:K_FMDB_MOVIES_DOWNLOAD_INFO
+                                                               AndWhere:nil
+                                                            WithOrderBy:@" ORDER BY `mid` DESC"];
+    if (arrTemp && [arrTemp count] > 0) {
+        NSPredicate *predicate = [NSPredicate predicateWithFormat:@"%K == %@",@"isDownload",[self.strType isEqualToString:@"正在下载"]?@"0":@"1"];
+        self.arrListData = [arrTemp filteredArrayUsingPredicate:predicate];
+        self.arrListData = [ZWDownloadModel mj_objectArrayWithKeyValuesArray:self.arrListData];
+        ZWWLog(@"最后的模型===\n %@",self.arrListData)
+    }
+    else
+      self.arrListData = @[];
+    if (self.collectionView.mj_header) {
+        [self.collectionView.mj_header endRefreshing];
+    }
+    [self.collectionView reloadData];
+}
+//MARK: - DownloadTableViewControllerDelegate
+-(void)downloadListProgress:(double)progressValue andMovieId:(NSInteger)movieId{
+    __weak typeof(self) weakSelf = self;
+    if (self.arrListData && [self.strType isEqualToString:@"正在下载"]) {
+        NSIndexPath *indexPatch;
+        for (NSUInteger i = 0,len = [self.arrListData count]; i < len; i++) {
+            ZWDownloadModel * model = self.arrListData[i];
+            if (model.movieid  == movieId) {
+                indexPatch = [NSIndexPath indexPathForRow:i inSection:0];
+                dispatch_async(dispatch_get_main_queue(), ^{
+                    UploadVideosCollectionCell *cell = [weakSelf.collectionView cellForItemAtIndexPath:indexPatch];
+                    if (cell) {
+                        cell.progressV.hidden = (progressValue <= 1)?NO:YES;
+                        cell.progressV.progress = progressValue;
+                    }
+                });
+            }
+        }
+    }
+}
+//MARK: - lazy load
+-(WaterfallLayout *)wlayout{
+    if (!_wlayout) {
+        _wlayout = [WaterfallLayout waterFallLayoutWithColumnCount:2];
+        _wlayout.headerReferenceSize = CGSizeZero;
+        [_wlayout setColumnSpacing:cell_margin
+                        rowSpacing:cell_margin
+                      sectionInset:UIEdgeInsetsMake(0, cell_margin, cell_margin, cell_margin)];
+        _wlayout.delegate = self;
+    }
+    return _wlayout;
+}
+//MARK: - UICollectionViewDelegate、UICollectionViewDataSource
+-(NSInteger)numberOfSectionsInCollectionView:(UICollectionView *)collectionView{
+    return 1;
+}
+//MARK:头尾视图
+-(CGSize)collectionView:(UICollectionView *)collectionView layout:(UICollectionViewLayout *)collectionViewLayout referenceSizeForHeaderInSection:(NSInteger)section{
+    return CGSizeZero;
+}
+-(CGSize)collectionView:(UICollectionView *)collectionView layout:(UICollectionViewLayout *)collectionViewLayout referenceSizeForFooterInSection:(NSInteger)section{
+    return CGSizeZero;
+}
+-(NSInteger)collectionView:(UICollectionView *)collectionView numberOfItemsInSection:(NSInteger)section{
+    if (self.arrListData && [self.arrListData count] > 0) {
+        [self.emptyView setHidden:YES];
+        return [self.arrListData count];
+    }
+    [self.emptyView setHidden:NO];
+    return 0;
+}
+- (CGFloat)waterfallLayout:(WaterfallLayout *)waterfallLayout itemHeightForWidth:(CGFloat)itemWidth atIndexPath:(NSIndexPath *)indexPath{
+    id cellData;
+    CGFloat h = 165;
+    CGFloat _h = 165;
+    CGFloat _w = (K_APP_WIDTH - 3 * cell_margin) * 0.5;
+    if (self.arrListData && [self.arrListData count] > indexPath.row) {
+        ZWDownloadModel *videoModel;
+        cellData = [_arrListData objectAtIndex:indexPath.row];
+        videoModel = (ZWDownloadModel *)cellData;
+        _w = videoModel.width;
+        _h = videoModel.height;
+        h = _h * (K_APP_WIDTH - 3 * cell_margin) * 0.5 / _w;
+    }
+    return h > 0 ? h : 165;
+}
+- (UICollectionViewCell *)collectionView:(UICollectionView *)collectionView cellForItemAtIndexPath:(NSIndexPath *)indexPath
+{
+    UploadVideosCollectionCell *cell = [collectionView dequeueReusableCellWithReuseIdentifier:newsCellIdentifier forIndexPath:indexPath];
+    cell.tag = indexPath.row;
+    if (self.arrListData && [self.arrListData count] > indexPath.row) {
+        ZWDownloadModel *model = self.arrListData[indexPath.row];
+        [cell cellBindForImgurl:model.cover
+                       andTitle:model.title
+                     withFinish:model.isDownload == 1? YES:NO];
+    }
+    return cell;
+}
+-(void)collectionView:(UICollectionView *)collectionView didSelectItemAtIndexPath:(NSIndexPath *)indexPath{
+    [collectionView deselectItemAtIndexPath:indexPath animated:YES];
+    //做个选择
+    if (self.arrListData && [self.arrListData count] > indexPath.row) {
+    UIAlertController *alertController = [UIAlertController alertControllerWithTitle:@"" message:@"请选择" preferredStyle:UIAlertControllerStyleActionSheet];
+        UIAlertAction *cancelAction = [UIAlertAction actionWithTitle:@"取消" style:UIAlertActionStyleCancel handler:nil];
+        UIAlertAction *okAction = [UIAlertAction actionWithTitle:@"播放" style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
+            [[AppDelegate shareInstance].window addSubview:self.movePlayView];
+            [[AppDelegate shareInstance].window addSubview:self.backBtn];
+            ZWDownloadModel *model = self.arrListData[indexPath.row];
+            __weak typeof(self) weakSelf = self;
+            self.player.orientationWillChange = ^(ZFPlayerController * _Nonnull player, BOOL isFullScreen) {
+                [weakSelf setNeedsStatusBarAppearanceUpdate];
+            };
+
+            [self.controlView showTitle:model.title
+                         coverURLString:model.cover
+                         fullScreenMode:ZFFullScreenModeLandscape];
+
+            NSString *strUrl = model.localurl;
+            if (![[NSFileManager defaultManager] fileExistsAtPath:strUrl]) {
+                strUrl = [NSString stringWithFormat:@"%@%@",K_APP_VIDEO_DOWNLOAD_PATH,model.move_name];
+            }
+
+            ZWWLog(@"播放地址：%@",strUrl);
+            self.playManager.assetURL = [NSURL fileURLWithPath:strUrl];
+            [self.playManager play];
+
+        }];
+        UIAlertAction *resetAction = [UIAlertAction actionWithTitle:@"删除" style:UIAlertActionStyleDestructive handler:^(UIAlertAction * _Nonnull action) {
+            NSInteger cellIndex = indexPath.row;
+            UIAlertController *alertVC = [UIAlertController alertControllerWithTitle:@"是否确认删除该视频？"
+                                                                             message:nil preferredStyle:UIAlertControllerStyleAlert];
+            UIAlertAction *confirm = [UIAlertAction actionWithTitle:@"确定"
+                                                              style:UIAlertActionStyleDestructive
+                                                            handler:^(UIAlertAction * _Nonnull action) {
+                                                                dispatch_async(dispatch_get_main_queue(), ^{
+                                                                    [self deleteMoveForIndex:cellIndex];
+                                                                });
+                                                            }];
+            UIAlertAction *cancle = [UIAlertAction actionWithTitle:@"取消" style:UIAlertActionStyleCancel handler:nil];
+            [alertVC addAction:confirm];
+            [alertVC addAction:cancle];
+            [self presentViewController:alertVC animated:YES completion:nil];
+        }];
+        [alertController addAction:cancelAction];
+        [alertController addAction:okAction];
+        [alertController addAction:resetAction];
+        [self presentViewController:alertController animated:YES completion:nil];
+    }
+}
+
+//MARK: - 删除
+-(void)deleteMoveForIndex:(NSInteger)index{
+    if (self.arrListData && [self.arrListData count] > index) {
+        ZWDownloadModel *model = self.arrListData[index];
+        NSString *strId = [NSString stringWithFormat:@"%ld",(long)model.mid];
+        
+        NSString *strLocalurl = model.localurl;
+        if (![[NSFileManager defaultManager] fileExistsAtPath:strLocalurl]) {
+            strLocalurl = [NSString stringWithFormat:@"%@%@",K_APP_VIDEO_DOWNLOAD_PATH,model.move_name];
+        }
+        
+        ZWWLog(@"删除地址:%@",strLocalurl);
+        if ([Utils checkTextEmpty:strLocalurl]) {
+            
+            //下载失败的，文件不存在，直接删除记录
+            if (![[NSFileManager defaultManager] fileExistsAtPath:strLocalurl]) {
+                [self removeHistoryWithId:strId];
+            }
+            else{
+                @try {
+                    NSError *error;
+                    BOOL isOK = [[NSFileManager defaultManager] removeItemAtPath:strLocalurl error:&error];
+                    if (isOK) {
+                        [YJProgressHUD showSuccess:@"视频删除成功"];
+                        [self removeHistoryWithId:strId];
+                    }
+                    else{
+                        ZWWLog(@"error:%@",error.localizedDescription);
+                        [YJProgressHUD showError:error.localizedDescription];
+                    }
+                } @catch (NSException *exception) {
+                    ZWWLog(@"删除失败!详见：%@",exception);
+                    [YJProgressHUD showError:@"删除失败"];
+                }
+            }
+        }
+    }
+    else{
+        [YJProgressHUD showInfo:@"索引越界"];
+    }
+}
+
+-(void)removeHistoryWithId:(NSString *)strId{
+    //删除数据库对应数据
+    BOOL isDelete = [[FMDBUtils shareInstance] removeDataForPrimaryKey:@"mid"
+                                                              AndTable:K_FMDB_MOVIES_DOWNLOAD_INFO
+                                                          withKeyValue:strId];
+    ZWWLog(@"数据库数据删除%@",isDelete?@"成功":@"失败");
+    [self.collectionView.mj_header beginRefreshing];
+}
+@end

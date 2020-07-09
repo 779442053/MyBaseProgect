@@ -1,0 +1,15 @@
+//
+//  JSCurrentUserModel.m
+//  快猪
+//
+//  Created by jasonguo on 2019/4/29.
+//  Copyright © 2019 时磊. All rights reserved.
+//
+
+#import "JSCurrentUserModel.h"
+
+@implementation JSCurrentUserModel
++ (NSDictionary *)mj_replacedKeyFromPropertyName{
+    return @{@"userId" : @"id"};
+}
+@end

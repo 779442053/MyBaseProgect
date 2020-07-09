@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.XIB" version="3.0" toolsVersion="14490.70" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" useSafeAreas="YES" colorMatched="YES">
+    <device id="retina4_7" orientation="portrait">
+        <adaptation id="fullscreen"/>
+    </device>
+    <dependencies>
+        <deployment identifier="iOS"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="14490.49"/>
+        <capability name="Safe area layout guides" minToolsVersion="9.0"/>
+        <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
+    </dependencies>
+    <objects>
+        <placeholder placeholderIdentifier="IBFilesOwner" id="-1" userLabel="File's Owner"/>
+        <placeholder placeholderIdentifier="IBFirstResponder" id="-2" customClass="UIResponder"/>
+        <view contentMode="scaleToFill" id="iN0-l3-epB" customClass="PriseView">
+            <rect key="frame" x="0.0" y="0.0" width="269" height="253"/>
+            <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+            <subviews>
+                <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="用户名" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="IrO-pB-kh4">
+                    <rect key="frame" x="110" y="15" width="49" height="19.5"/>
+                    <fontDescription key="fontDescription" type="system" pointSize="16"/>
+                    <nil key="textColor"/>
+                    <nil key="highlightedColor"/>
+                </label>
+                <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="共获得1个赞" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="bRE-yq-AvD">
+                    <rect key="frame" x="90" y="40.5" width="89" height="19.5"/>
+                    <fontDescription key="fontDescription" type="system" pointSize="16"/>
+                    <nil key="textColor"/>
+                    <nil key="highlightedColor"/>
+                </label>
+                <button opaque="NO" contentMode="scaleAspectFit" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="nOy-jh-iE8">
+                    <rect key="frame" x="0.0" y="213" width="269" height="40"/>
+                    <constraints>
+                        <constraint firstAttribute="height" constant="40" id="pVA-NL-TgA"/>
+                    </constraints>
+                    <fontDescription key="fontDescription" type="system" pointSize="16"/>
+                    <state key="normal" title="好的" backgroundImage="red_btn_bg.png">
+                        <color key="titleColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
+                    </state>
+                    <connections>
+                        <action selector="clickbtnEvent:" destination="iN0-l3-epB" eventType="touchUpInside" id="bY3-t9-6kk"/>
+                    </connections>
+                </button>
+                <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="praise.png" translatesAutoresizingMaskIntoConstraints="NO" id="8oe-qb-V5h">
+                    <rect key="frame" x="58" y="83" width="153" height="107"/>
+                </imageView>
+            </subviews>
+            <color key="backgroundColor" red="1" green="1" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+            <constraints>
+                <constraint firstItem="8oe-qb-V5h" firstAttribute="centerX" secondItem="iN0-l3-epB" secondAttribute="centerX" id="3rO-o6-EW3"/>
+                <constraint firstItem="bRE-yq-AvD" firstAttribute="top" secondItem="IrO-pB-kh4" secondAttribute="bottom" constant="6" id="Rje-aZ-tqM"/>
+                <constraint firstItem="vUN-kp-3ea" firstAttribute="bottom" secondItem="nOy-jh-iE8" secondAttribute="bottom" id="Wbo-qL-RfW"/>
+                <constraint firstItem="vUN-kp-3ea" firstAttribute="trailing" secondItem="nOy-jh-iE8" secondAttribute="trailing" id="Wgm-Kx-DPL"/>
+                <constraint firstItem="IrO-pB-kh4" firstAttribute="top" secondItem="vUN-kp-3ea" secondAttribute="top" constant="15" id="X8w-0y-aL5"/>
+                <constraint firstItem="IrO-pB-kh4" firstAttribute="centerX" secondItem="iN0-l3-epB" secondAttribute="centerX" id="azy-0v-9mb"/>
+                <constraint firstItem="bRE-yq-AvD" firstAttribute="centerX" secondItem="IrO-pB-kh4" secondAttribute="centerX" id="dpg-K4-XgX"/>
+                <constraint firstItem="8oe-qb-V5h" firstAttribute="centerY" secondItem="iN0-l3-epB" secondAttribute="centerY" constant="10" id="kcq-qe-ps3"/>
+                <constraint firstItem="nOy-jh-iE8" firstAttribute="leading" secondItem="vUN-kp-3ea" secondAttribute="leading" id="lzZ-ms-hZq"/>
+            </constraints>
+            <freeformSimulatedSizeMetrics key="simulatedDestinationMetrics"/>
+            <viewLayoutGuide key="safeArea" id="vUN-kp-3ea"/>
+            <connections>
+                <outlet property="desLable" destination="bRE-yq-AvD" id="FG0-7s-0Ac"/>
+                <outlet property="userName" destination="IrO-pB-kh4" id="rlO-k3-LG7"/>
+            </connections>
+            <point key="canvasLocation" x="21" y="-71"/>
+        </view>
+    </objects>
+    <resources>
+        <image name="praise.png" width="153" height="107"/>
+        <image name="red_btn_bg.png" width="57.5" height="28"/>
+    </resources>
+</document>

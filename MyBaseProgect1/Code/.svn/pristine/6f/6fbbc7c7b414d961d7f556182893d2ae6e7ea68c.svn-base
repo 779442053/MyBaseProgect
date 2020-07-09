@@ -1,0 +1,107 @@
+//
+//  PrefixHeader.pch
+//  QuanPaiPai
+//
+//  Created by XianXin on 2018/12/13.
+//  Copyright © 2018 XianXin. All rights reserved.
+//
+
+#ifndef PrefixHeader_pch
+#define PrefixHeader_pch
+
+// Include any system framework and library headers here that should be included in all compilation units.
+// You will also need to set the Prefix Header build setting of one or more of your targets to reference this file.
+
+//////////////////////////////////////////////////////////////
+//MARK: - 文件引用设置
+//////////////////////////////////////////////////////////////
+#import <UIKit/UIKit.h>
+#import <Foundation/Foundation.h>
+#import "ReactiveObjC.h"
+#import "UIDevice+Screen.h"
+#import "UIColor+Custom.h"
+#import "UIScrollView+FDFullscreenPopGesture.h"
+
+#import "AppSetting/UrlSetting.h"
+#import "AppSetting/GlobalSetting.h"
+#import "Utils.h"
+#import "BaseUIView.h"
+#import "UserModel.h"
+#import "AppDelegate.h"
+
+#import "BaseTabBarController.h"
+#import "BaseViewController.h"
+#import "RefreshTableViewController.h"
+#import "UILabel+VerticalAlign.h"
+
+//列表侧滑
+//#import "SWTableViewCell.h"
+
+//网络请求
+#import "AFNetworking.h"
+#import "UIImage+AFNetworking.h"
+#import "UIImageView+AFNetworking.h"
+#import "UIButton+AFNetworking.h"
+#import "UIWebView+AFNetworking.h"
+
+//图片加载 SDWebImage
+#import "SDWebImage.h"
+
+//图片预览(Gif 图片加载)
+#import "FLAnimatedImageView.h"
+#import "FLAnimatedImage.h"
+
+//键盘优化工具
+#import "IQKeyboardManager.h"
+
+//Bugly Bug监控
+#import "Bugly/Bugly.h"
+
+//模态框
+#import "MBProgressHUD.h"
+#import "MBProgressHUD+MJ.h"
+#import "YJProgressHUD.h"
+
+//刷新、加载更多
+#import "MJRefresh.h"
+//字典、模型互转
+#import "MJExtension.h"
+
+//自定义文本框
+#import "ANCustomTextField.h"
+#import "UITextField+LayneCategory.h"
+
+//轮播视图组件
+#import "TYCyclePagerView.h"
+#import "TYPageControl.h"
+
+//MD5 加密方法
+#import "NSString+Hashing.h"
+#import "NSURL+ChineseUrl.h"//处理中文图片地址
+
+//SQLite3 数据库
+#import "sqlite3.h"
+#import "FMDB.h"
+#import "FMDBUtils.h"
+
+//顶部菜单
+#import "MLMSegmentManager.h"
+#import "UIView+ViewController.h"
+
+//约束
+#import "Masonry.h"
+
+//广告模型
+#import "Advertisements.h"
+
+//导航
+#import "WRNavigationBar.h"
+#import <YYKit.h>
+
+//全局用户数据类
+#import "ZWDataManager.h"
+#import "ZWUserModel.h"
+#import "wyhCornerRadius.h"
+
+#define WeakSelf  __weak __typeof(&*self)weakSelf = self;
+#endif /* PrefixHeader_pch */

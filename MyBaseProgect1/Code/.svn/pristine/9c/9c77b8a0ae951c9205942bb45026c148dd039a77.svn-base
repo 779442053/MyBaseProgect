@@ -1,0 +1,23 @@
+//
+//  PopularizeModel.m
+//  快猪
+//
+//  Created by 魏冰杰 on 2019/1/18.
+//  Copyright © 2019年 时磊. All rights reserved.
+//
+
+#import "PopularizeModel.h"
+
+@implementation PopularizeModel
++ (NSDictionary *)mj_objectClassInArray{
+    return @{
+             @"lvList" : [lvList class]
+             };
+}
+
+@end
+
+@implementation lvList
+
+
+@end

@@ -1,0 +1,283 @@
+//
+//  MyPromoteViewController.m
+//  KuaiZhu
+//
+//  Created by apple on 2019/6/11.
+//  Copyright © 2019 su. All rights reserved.
+//
+
+#import "MyPromoteViewController.h"
+#import "PopularizeModel.h"
+
+#import <Photos/Photos.h>
+
+static CGFloat const bottom_button_h = 40;
+static CGFloat const button_margin = 20;
+static CGFloat const margin_top = 50;
+
+#define qrcode_image_width ([[UIDevice currentDevice] isSmallDevice]?180:220)
+
+@interface MyPromoteViewController ()
+
+@property (nonatomic, strong) UIImageView *imgBg;
+
+@property (nonatomic, strong) UIView *contentView;
+@property (nonatomic, strong) UIImageView *imgQRCode;
+@property (nonatomic, strong) UILabel *labCode;
+
+@property (nonatomic, strong) UIButton *btnSave;
+@property (nonatomic, strong) UIButton *btnCopy;
+@end
+
+@implementation MyPromoteViewController
+
+- (void)viewDidLoad {
+    [super viewDidLoad];
+    // Do any additional setup after loading the view.
+
+    [self initView];
+}
+
+-(BOOL)prefersStatusBarHidden{
+    return NO;
+}
+
+-(UIStatusBarStyle)preferredStatusBarStyle{
+    return UIStatusBarStyleLightContent;
+}
+
+
+//MARK: - initView
+-(void)initView{
+    
+    //MARK:背景图
+    [self.view addSubview:self.imgBg];
+    
+    //MARK:导航
+    [self initNavgationBar:[UIColor clearColor]
+          AndHasBottomLine:NO
+              AndHasShadow:NO
+             WithHasOffset:0.0];
+    
+    //MARK:返回
+    [self initNavigationBack:K_APP_WHITE_BACK];
+    
+    //MARK:标题
+    [self initViewControllerTitle:@"推广分享获取永久免费观影"
+                     AndFontColor:[UIColor whiteColor]
+                       AndHasBold:NO
+                      AndFontSize:K_APP_VIEWCONTROLLER_TITLE_FONT];
+    
+    //MARK:二维码视图
+    [self.view addSubview:self.contentView];
+    
+    //MARk:保存二维码
+    [self.view addSubview:self.btnSave];
+    
+    //MARK:复制链接
+    [self.view addSubview:self.btnCopy];
+}
+
+
+//MARK: - 保存二维码
+-(IBAction) btnSaveQRCodeAction:(UIButton *)sender{
+    
+    //截图
+    UIImage *imgQRCode = [Utils screenShotForView:self.contentView];
+    
+    //保存图片
+    [Utils createFolder:K_APP_NAME
+          andBackaction:^(PHAssetCollection *assetCollection) {
+              ZWWLog(@"assetCollection:%@",assetCollection);
+              
+              dispatch_async(dispatch_get_main_queue(), ^{
+                  [[PHPhotoLibrary sharedPhotoLibrary] performChanges:^{
+                      //请求创建一个Asset
+                      PHAssetChangeRequest *assetRequest = [PHAssetChangeRequest creationRequestForAssetFromImage:imgQRCode];
+                      
+                      //请求编辑相册
+                      PHAssetCollectionChangeRequest *collectonRequest = [PHAssetCollectionChangeRequest changeRequestForAssetCollection:assetCollection];
+                      
+                      //为Asset创建一个占位符，放到相册编辑请求中
+                      PHObjectPlaceholder *placeHolder = [assetRequest placeholderForCreatedAsset];
+                      
+                      //相册中添加视频
+                      [collectonRequest addAssets:@[placeHolder]];
+                      
+                  } completionHandler:^(BOOL success, NSError *error) {
+                      if (success) {
+                          ZWWLog(@"保存二维码成功!");
+                          
+                          dispatch_async(dispatch_get_main_queue(), ^{
+                              [MBProgressHUD showSuccess:@"已保存到系统相册"];
+                          });
+                          
+                      } else {
+                          ZWWLog(@"保存二维码失败:%@", error);
+                          
+                          dispatch_async(dispatch_get_main_queue(), ^{
+                              [MBProgressHUD showError:error.localizedDescription];
+                          });
+                      }
+                  }];
+              });
+          }];
+}
+
+
+//MARK: - 复制地址
+-(IBAction)btnCopyAction:(UIButton *)sender{
+    UIPasteboard *pasteBoard = [UIPasteboard generalPasteboard];
+    pasteBoard.string = [NSString stringWithFormat:@"%@?%@",_popularizeModel.shareUrl,K_APP_SHARE_INFO];
+    
+    [MBProgressHUD showInfo:@"已复制到剪切板"];
+}
+
+
+//MARK: - lazy
+-(UIImageView *)imgBg{
+    if (!_imgBg) {
+        _imgBg = [BaseUIView createImage:[UIScreen mainScreen].bounds
+                                AndImage:[UIImage imageNamed:@"tuiguangbeijing.jpg"]
+                      AndBackgroundColor:nil
+                            WithisRadius:NO];
+        [Utils imgNoTransformation:_imgBg];
+    }
+    return _imgBg;
+}
+
+-(UIView *)contentView{
+    if (!_contentView) {
+        CGFloat x = 20;
+        CGFloat h = [[UIDevice currentDevice] isSmallDevice]?350:400;
+        CGFloat y = K_APP_NAVIGATION_BAR_HEIGHT + 30;
+        CGFloat w = K_APP_WIDTH - 2 * x;
+        _contentView = [BaseUIView createView:CGRectMake(x, y, w, h)
+                           AndBackgroundColor:[UIColor whiteColor]
+                                  AndisRadius:YES
+                                    AndRadiuc:5
+                               AndBorderWidth:0
+                               AndBorderColor:nil];
+        
+        //MARK:标题
+        x = 10;
+        w = _contentView.frame.size.width - 2 * x;
+        y = 15;
+        h = 21;
+        UILabel *labTitle = [BaseUIView createLable:CGRectMake(x, y, w, h)
+                                            AndText:[NSString stringWithFormat:@"扫描下载%@视频APP",K_APP_NAME]
+                                       AndTextColor:[UIColor darkGrayColor]
+                                         AndTxtFont:[UIFont systemFontOfSize:14]
+                                 AndBackgroundColor:nil];
+        labTitle.adjustsFontSizeToFitWidth = YES;
+        labTitle.textAlignment = NSTextAlignmentCenter;
+        [_contentView addSubview:labTitle];
+        
+        //MARK:二维码
+        [_contentView addSubview:self.imgQRCode];
+        
+        //MARK:用户码
+        [_contentView addSubview:self.labCode];
+        
+        //MARK:描述
+        x = 0;
+        w = _contentView.frame.size.width;
+        h = 21;
+        y = _contentView.frame.size.height - h - 15;
+        UILabel *labBottom = [BaseUIView createLable:CGRectMake(x, y, w, h)
+                                            AndText:@"您的推广码"
+                                       AndTextColor:[UIColor darkGrayColor]
+                                         AndTxtFont:[UIFont systemFontOfSize:12]
+                                 AndBackgroundColor:nil];
+        labBottom.textAlignment = NSTextAlignmentCenter;
+        [_contentView addSubview:labBottom];
+    }
+    
+    return _contentView;
+}
+
+-(UIImageView *)imgQRCode{
+    if (!_imgQRCode) {
+        CGFloat w = qrcode_image_width;
+        CGFloat h = qrcode_image_width;
+        CGFloat x = (_contentView.frame.size.width - w) * 0.5;
+        CGFloat y = (_contentView.frame.size.height - h) * 0.5;
+        
+        NSString *strQRurl;
+        if (_popularizeModel) {
+            strQRurl = [NSString stringWithFormat:@"%@?inviteCode=%@&%@",_popularizeModel.shareUrl,_popularizeModel.invCode,K_APP_SHARE_INFO];
+        }
+        
+        _imgQRCode = [BaseUIView createImage:CGRectMake(x, y, w, h)
+                                    AndImage:strQRurl?[Utils getCodeImage:strQRurl andDrawLogo:YES]:K_APP_DEFAULT_IMAGE_SMALL
+                          AndBackgroundColor:nil
+                                   AndRadius:NO
+                                 WithCorners:0];
+    }
+    return _imgQRCode;
+}
+
+-(UILabel *)labCode{
+    if (!_labCode) {
+        CGFloat h = 21;
+        CGFloat y = _contentView.frame.size.height - h - 36;
+        _labCode = [BaseUIView createLable:CGRectMake(0, y, _contentView.frame.size.width, h)
+                                   AndText:_popularizeModel?_popularizeModel.invCode:@""
+                              AndTextColor:[UIColor darkGrayColor]
+                                AndTxtFont:[UIFont systemFontOfSize:16]
+                        AndBackgroundColor:nil];
+        _labCode.textAlignment = NSTextAlignmentCenter;
+    }
+    
+    return _labCode;
+}
+
+-(UIButton *)btnSave{
+    if (!_btnSave) {
+        CGFloat x = button_margin;
+        CGFloat h = bottom_button_h;
+        CGFloat y = _contentView.frame.size.height + _contentView.frame.origin.y + margin_top;
+        CGFloat w = (K_APP_WIDTH - 3 * x) * 0.5;
+        
+        _btnSave = [BaseUIView createBtn:CGRectMake(x, y, w, h)
+                                AndTitle:nil
+                           AndTitleColor:[UIColor whiteColor]
+                              AndTxtFont:[UIFont systemFontOfSize:16]
+                                AndImage:nil
+                      AndbackgroundColor:nil
+                          AndBorderColor:nil
+                         AndCornerRadius:5
+                            WithIsRadius:YES
+                     WithBackgroundImage:[UIImage imageNamed:@"baocunerweima.png"]
+                         WithBorderWidth:0];
+        
+        [_btnSave addTarget:self action:@selector(btnSaveQRCodeAction:) forControlEvents:UIControlEventTouchUpInside];
+    }
+    
+    return _btnSave;
+}
+
+-(UIButton *)btnCopy{
+    if (!_btnCopy) {
+        CGRect rect = _btnSave.frame;
+        rect.origin.x = K_APP_WIDTH - button_margin - rect.size.width;
+        
+        _btnCopy = [BaseUIView createBtn:rect
+                                AndTitle:@"复制推广链接"
+                           AndTitleColor:[UIColor colorWithHexString:@"#DEB388"]
+                              AndTxtFont:[UIFont systemFontOfSize:16]
+                                AndImage:nil
+                      AndbackgroundColor:[UIColor whiteColor]
+                          AndBorderColor:nil
+                         AndCornerRadius:5
+                            WithIsRadius:YES
+                     WithBackgroundImage:nil
+                         WithBorderWidth:0];
+        
+        [_btnCopy addTarget:self action:@selector(btnCopyAction:) forControlEvents:UIControlEventTouchUpInside];
+    }
+    
+    return _btnCopy;
+}
+
+@end

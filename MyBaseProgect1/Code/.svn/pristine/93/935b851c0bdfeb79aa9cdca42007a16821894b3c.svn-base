@@ -1,0 +1,40 @@
+//
+//  PopularizeView.h
+//  快猪
+//
+//  Created by 魏冰杰 on 2019/1/17.
+//  Copyright © 2019年 时磊. All rights reserved.
+//
+
+#import <UIKit/UIKit.h>
+#import "PopularizeModel.h"
+
+@interface PopularizeView : UIView
+@property (weak, nonatomic) IBOutlet UIView *topBgView;
+@property (weak, nonatomic) IBOutlet UIImageView *userphoto;
+@property (weak, nonatomic) IBOutlet UILabel *userName;
+@property (weak, nonatomic) IBOutlet UILabel *seenCount;
+@property (weak, nonatomic) IBOutlet UILabel *invCoed;
+@property (weak, nonatomic) IBOutlet UILabel *lvLeft;
+@property (weak, nonatomic) IBOutlet UILabel *lvRight;
+@property (weak, nonatomic) IBOutlet UIImageView *curIvIcon;
+@property (weak, nonatomic) IBOutlet UIImageView *nextLvIcon;
+
+//距离下一等级的人数
+@property(weak, nonatomic) IBOutlet UILabel *lvNO;
+
+@property (weak, nonatomic) IBOutlet UILabel *residueCount;
+
+@property (weak, nonatomic) IBOutlet UILabel *labQRCode;
+
+@property (weak, nonatomic) IBOutlet UIImageView *imgQRCode;
+
+@property (weak, nonatomic) IBOutlet UIImageView *imgBottom;
+
+@property (nonatomic,strong) PopularizeModel *model;
+
+@property (weak, nonatomic) IBOutlet UILabel *labDescription;
+
++ (instancetype)createPopularizeViewInit;
+
+@end

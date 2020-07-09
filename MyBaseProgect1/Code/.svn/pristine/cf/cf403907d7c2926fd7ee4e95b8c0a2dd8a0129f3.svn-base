@@ -1,0 +1,502 @@
+//
+//  RegisterViewController.m
+//  KuaiZhu
+//
+//  Created by Ghy on 2019/5/13.
+//  Copyright © 2019年 su. All rights reserved.
+//
+
+#import "RegisterViewController.h"
+#import "LoginViewController.h"
+
+#define k_margin 42.5
+#define k_view_height 40
+#define k_top_margin ([[UIDevice currentDevice] isSmallDevice]?0:10)
+#define TextColor [[UIColor alloc] colorFromHexInt:0x999999 AndAlpha:1.0]
+
+@interface RegisterViewController ()<UITextFieldDelegate>
+
+@property (nonatomic, strong) UIView            *contentView;   //内容视图
+@property (nonatomic, strong) ANCustomTextField *txtEmail;      //手机号
+@property (nonatomic, strong) UITextField *CodeTF;        //密码
+@property (nonatomic, strong) ANCustomTextField *txtPwd;        //密码
+@property (nonatomic, strong) ANCustomTextField *txtCPwd;       //确认密码
+@property (nonatomic, strong) ANCustomTextField *txtNickname;   //昵称
+@property (nonatomic, strong) ANCustomTextField *txtCode;       //邀请码
+@property (nonatomic, strong) UIButton          *btnRegister;   //注册
+@property(nonatomic,assign)NSInteger time;
+
+@end
+
+@implementation RegisterViewController
+
+- (void)viewDidLoad {
+    [super viewDidLoad];
+    
+    // Do any additional setup after loading the view.
+    [self initView];
+}
+
+
+//MARK: - initView
+-(void)initView{
+    self.view.backgroundColor = UIColor.clearColor;
+    self.view.layer.backgroundColor = UIColor.clearColor.CGColor;
+    //MARK:主视图
+    [self.view addSubview:self.contentView];
+    //MARK:邮箱==手机号
+    [self.contentView addSubview:self.txtEmail];
+    //验证码
+    [self.contentView addSubview:self.CodeTF];
+    UIButton *sendCodeBtn = [UIButton buttonWithType:UIButtonTypeCustom];
+    CGRect rect = self.CodeTF.frame;
+    [sendCodeBtn setFrame:CGRectMake(self.txtEmail.frame.size.width - 100 + k_margin,  5 + rect.origin.y, 100, rect.size.height - 10)];
+    [sendCodeBtn setTitle:@"获取验证码" forState:UIControlStateNormal];
+    [sendCodeBtn setTitleColor:RGBCOLOR(127, 184, 255) forState:UIControlStateNormal];
+    [sendCodeBtn.titleLabel setFont:FONT(13)];
+
+    [sendCodeBtn.layer setMasksToBounds:YES];
+    [sendCodeBtn.layer setCornerRadius:5];
+    [sendCodeBtn.layer setBorderWidth:1];
+    [sendCodeBtn.layer setBorderColor:RGBCOLOR(127, 184, 255).CGColor];
+
+    [sendCodeBtn addTarget:self action:@selector(sendCodeAction:) forControlEvents:UIControlEventTouchUpInside];
+    [self.contentView addSubview:sendCodeBtn];
+    //下划线
+
+    UIView *lineView = [[UIView alloc]initWithFrame:CGRectMake(rect.origin.x, CGRectGetMaxY(rect), self.txtEmail.frame.size.width, 1)];
+    lineView.backgroundColor = K_APP_SPLIT_LINE_COLOR;
+    [self.contentView addSubview:lineView];
+    //MARK:密码
+    [self.contentView addSubview:self.txtPwd];
+    //MARK:确认密码
+    [self.contentView addSubview:self.txtCPwd];
+    //MARK:昵称
+    [self.contentView addSubview:self.txtNickname];
+    
+    //MARK:邀请码
+    [self.contentView addSubview:self.txtCode];
+    
+    //MARK:注册
+    [self.view addSubview:self.btnRegister];
+}
+
+
+//MARK: - lazy load
+-(UIView *)contentView {
+    if (!_contentView) {
+        CGFloat x = 15;
+        CGFloat w = K_APP_WIDTH - 2 * x;
+        _contentView = [BaseUIView createView:CGRectMake(x, 0, w, 378)
+                           AndBackgroundColor:UIColor.whiteColor
+                                  AndisRadius:YES
+                                    AndRadiuc:13
+                               AndBorderWidth:1
+                               AndBorderColor:UIColor.lightGrayColor];
+        
+        //阴影
+        [Utils setViewShadowStyle:_contentView
+                   AndShadowColor:UIColor.lightGrayColor
+                 AndShadowOpacity:1
+                  AndShadowRadius:7
+                 WithShadowOffset:CGSizeMake(0,1)];
+
+    }
+    return _contentView;
+}
+
+-(ANCustomTextField *)txtEmail{
+    if (!_txtEmail) {
+        CGFloat y = k_top_margin;
+        CGRect rect = CGRectMake(k_margin,y , K_APP_WIDTH - 2 * k_margin - 30, k_view_height);
+        _txtEmail = [[ANCustomTextField alloc] initWithFrame:rect];
+        _txtEmail.keyboardType = UIKeyboardTypeNumberPad;
+        _txtEmail.returnKeyType = UIReturnKeyNext;
+        
+        _txtEmail.delegate = self;
+        _txtEmail.hasBorder = NO;
+        _txtEmail.hasBottomBorder = YES;
+        _txtEmail.borderStyle = UITextBorderStyleNone;
+        _txtEmail.bottomLine.backgroundColor = K_APP_SPLIT_LINE_COLOR;
+        
+        //显示清除按钮
+        _txtEmail.clearButtonMode = UITextFieldViewModeWhileEditing;
+        
+        _txtEmail.placeholder = @"请输入手机号";
+        _txtEmail.textColor = TextColor;
+        _txtEmail.font = FONTOFPX(28);
+    }
+    return _txtEmail;
+}
+
+-(ANCustomTextField *)txtPwd{
+    if (!_txtPwd) {
+        CGRect rect = self.CodeTF.frame;
+        CGRect rectTWO = self.txtEmail.frame;
+        rect.origin.y += rect.size.height + k_top_margin;
+        rect.size.width = rectTWO.size.width;
+        _txtPwd = [[ANCustomTextField alloc] initWithFrame:rect];
+        _txtPwd.placeholder = @"请输入密码";
+        
+        _txtPwd.delegate = self;
+        _txtPwd.hasBorder = NO;
+        _txtPwd.hasBottomBorder = YES;
+        _txtPwd.borderStyle = UITextBorderStyleNone;
+        _txtPwd.bottomLine.backgroundColor = K_APP_SPLIT_LINE_COLOR;
+        
+        //密码框
+        _txtPwd.secureTextEntry = YES;
+        
+        //显示清除按钮
+        _txtPwd.clearButtonMode = UITextFieldViewModeWhileEditing;
+        
+        _txtPwd.keyboardType = UIKeyboardTypeDefault;
+        _txtPwd.returnKeyType = UIReturnKeyNext;
+    }
+    return _txtPwd;
+}
+-(UITextField *)CodeTF{
+    if (!_CodeTF) {
+        CGRect rect = self.txtEmail.frame;
+        rect.origin.y += rect.size.height + k_top_margin;
+        rect.size.width = rect.size.width/2;
+
+        _CodeTF = [[ANCustomTextField alloc] initWithFrame:rect];
+        _CodeTF.placeholder = @"请输入验证码";
+        _CodeTF.keyboardType = UIKeyboardTypeNumberPad;
+        _CodeTF.delegate = self;
+        _CodeTF.borderStyle = UITextBorderStyleNone;
+        _CodeTF.textColor = [UIColor colorWithHexString:@"#A7A7A8"];
+        //显示清除按钮
+        _CodeTF.clearButtonMode = UITextFieldViewModeWhileEditing;
+        _CodeTF.returnKeyType = UIReturnKeyNext;
+    }
+    return _CodeTF;
+}
+
+-(ANCustomTextField *)txtCPwd{
+    if (!_txtCPwd) {
+        CGRect rect = self.txtPwd.frame;
+
+        rect.origin.y += rect.size.height + k_top_margin;
+        
+        _txtCPwd = [[ANCustomTextField alloc] initWithFrame:rect];
+        _txtCPwd.placeholder = @"确认密码";
+        
+        _txtCPwd.hasBorder = NO;
+        _txtCPwd.hasBottomBorder = YES;
+        _txtCPwd.borderStyle = UITextBorderStyleNone;
+        _txtCPwd.bottomLine.backgroundColor = K_APP_SPLIT_LINE_COLOR;
+        _txtCPwd.delegate = self;
+        
+        //密码框
+        _txtCPwd.secureTextEntry = YES;
+        
+        //显示清除按钮
+        _txtCPwd.clearButtonMode = UITextFieldViewModeWhileEditing;
+        
+        _txtCPwd.keyboardType = UIKeyboardTypeDefault;
+        _txtCPwd.returnKeyType = UIReturnKeyJoin;
+    }
+    return _txtCPwd;
+}
+
+-(ANCustomTextField *)txtNickname{
+    if (!_txtNickname) {
+        CGRect rect = self.txtCPwd.frame;
+        rect.origin.y += rect.size.height + k_top_margin;
+        _txtNickname = [[ANCustomTextField alloc] initWithFrame:rect];
+        _txtNickname.keyboardType = UIKeyboardTypeNamePhonePad;
+        _txtNickname.returnKeyType = UIReturnKeyNext;
+         [[NSNotificationCenter defaultCenter]addObserver:self selector:@selector(textFiledEditChanged:) name:UITextFieldTextDidChangeNotification object:_txtNickname];
+        _txtNickname.delegate = self;
+        _txtNickname.hasBorder = NO;
+        _txtNickname.hasBottomBorder = YES;
+        _txtNickname.borderStyle = UITextBorderStyleNone;
+        _txtNickname.bottomLine.backgroundColor = K_APP_SPLIT_LINE_COLOR;
+        
+        //显示清除按钮
+        _txtNickname.clearButtonMode = UITextFieldViewModeWhileEditing;
+        
+        _txtNickname.placeholder = @"输入昵称(只能是中文哦)";
+        _txtNickname.textColor = TextColor;
+        _txtNickname.font = FONTOFPX(28);
+    }
+    return _txtNickname;
+}
+
+-(ANCustomTextField *)txtCode{
+    if (!_txtCode) {
+        CGRect rect = self.txtNickname.frame;
+        rect.origin.y += rect.size.height + k_top_margin;
+        _txtCode = [[ANCustomTextField alloc] initWithFrame:rect];
+        _txtCode.keyboardType = UIKeyboardTypeNamePhonePad;
+        _txtCode.returnKeyType = UIReturnKeyJoin;
+        
+        _txtCode.delegate = self;
+        _txtCode.hasBorder = NO;
+        _txtCode.hasBottomBorder = YES;
+        _txtCode.borderStyle = UITextBorderStyleNone;
+        _txtCode.bottomLine.backgroundColor = K_APP_SPLIT_LINE_COLOR;
+        
+        //显示清除按钮
+        _txtCode.clearButtonMode = UITextFieldViewModeWhileEditing;
+        
+        _txtCode.placeholder = @"输入邀请码(邀请码可不填)";
+        _txtCode.textColor = TextColor;
+        _txtCode.font = FONTOFPX(28);
+    }
+    return _txtCode;
+}
+
+-(UIButton *)btnRegister{
+    if (!_btnRegister) {
+        CGFloat w = 211;
+        CGFloat h = 46;
+        CGFloat x = (K_APP_WIDTH - w) * 0.5;
+        CGFloat y = self.contentView.origin.y + self.contentView.size.height + ([UIDevice currentDevice].isSmallDevice?15:45);
+        _btnRegister = [BaseUIView createBtn:CGRectMake(x, y, w, h)
+                                 AndTitle:nil
+                            AndTitleColor:nil
+                               AndTxtFont:nil
+                                 AndImage:nil
+                       AndbackgroundColor:nil
+                           AndBorderColor:nil
+                          AndCornerRadius:0
+                             WithIsRadius:NO
+                      WithBackgroundImage:[UIImage imageNamed:@"login_register"]
+                          WithBorderWidth:0.0];
+        
+        [_btnRegister addTarget:self
+                         action:@selector(btnRegisterAction:)
+               forControlEvents:UIControlEventTouchUpInside];
+    }
+    return _btnRegister;
+}
+- (void)sendCodeAction:(UIButton *)sender
+{//判断手机号是否合法
+    if ([Utils checkPhoneNo:self.txtEmail.text]) {
+        //开始倒计时,并且获取验证码
+        UIButton *btn           = sender;
+        btn.enabled             = NO;
+        self.time               = 60;
+         [btn setTitle:[NSString stringWithFormat:@"%lds",self.time] forState:UIControlStateNormal];
+        __block NSTimer *timer   = [NSTimer scheduledTimerWithTimeInterval:1 target:self selector:@selector(updateCodeTime:) userInfo:btn repeats:YES];
+        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(60 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+            [timer invalidate];
+            timer               = nil;
+            btn.enabled         = YES;
+            [btn setTitle:@"获取验证码" forState:UIControlStateNormal];
+        });
+        NSString *phone = [self.txtEmail.text stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
+        NSDictionary *dicData = @{
+                                  @"Phone":phone
+                                  };
+        [[LoginViewController shareInstance] getCode:dicData];
+    }else{
+        [YJProgressHUD showError:@"请输入正确的手机号"];
+    }
+    NSLog(@"发送验证码");
+
+}
+- (void)updateCodeTime:(NSTimer *)timer
+{
+    UIButton *btn = timer.userInfo;
+    self.time--;
+    [btn setTitle:[NSString stringWithFormat:@"%lds",self.time] forState:UIControlStateNormal];
+}
+//MARK: - 注册
+-(IBAction)btnRegisterAction:(UIButton *)sender{
+    //用户名
+    NSString *strUserName = [self.txtEmail.text stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
+    if (![Utils checkTextEmpty:strUserName]) {
+        [YJProgressHUD showError:@"请输入手机号"];
+        return;
+    }
+    else if(![Utils checkPhoneNo:strUserName]){
+        [YJProgressHUD showError:@"手机号格式有误"];
+        return;
+    }
+
+    if (![Utils checkTextEmpty:self.CodeTF.text]) {
+        [YJProgressHUD showError:@"请输入验证码"];
+        return;
+    }
+    //账号密码登录
+    NSString *strPassword = [self.txtPwd.text stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
+    if (![Utils checkTextEmpty:strPassword]) {
+        [YJProgressHUD showError:@"请输入密码"];
+        return;
+    }
+    else if([Utils stringContainsEmoji:strPassword]){
+        [YJProgressHUD showError:@"密码不能含有Emoji表情符号"];
+        return;
+    }
+    else if(![Utils checkPassword:strPassword]){
+        [YJProgressHUD showError:@"密码长度为6-20位字母或数字组成"];
+        return;
+    }
+    
+    //确认码
+    NSString *strCPassword = [self.txtCPwd.text stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
+    if (![strPassword isEqualToString:strCPassword]) {
+        [YJProgressHUD showError:@"两者密码不匹配"];
+        return;
+    }
+    
+    //昵称
+    NSString *strNickname = [self.txtNickname.text stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
+    if (![Utils checkTextEmpty:strNickname]) {
+        [YJProgressHUD showError:@"请输入昵称"];
+        return;
+    }
+    else if(![Utils checkChinese:strNickname AndLength:kChineseLen]){
+        [YJProgressHUD showError:@"请输入中文"];
+        return;
+    }
+    
+    //邀请码
+    NSString *strCode = [self.txtCode.text stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
+    if ([strCode length] > 0 && ![Utils checkPassword:strCode]) {
+        [YJProgressHUD showError:@"请输入数字和字母组成的邀请码"];
+        return;
+    }
+    
+    NSString *strUrl = [NSString stringWithFormat:@"%@RegisterByPhone",K_APP_HOST];
+    NSDictionary *dicData = @{
+                              @"name":strNickname,
+                              @"phone":strUserName,
+                              @"password":strPassword,
+                              @"deviceID":[Utils dy_getIDFV],
+                              @"valCode":self.CodeTF.text,//验证码
+                              @"invCode":strCode
+                              };
+    
+    [Utils postRequestForServerData:strUrl
+                     withParameters:dicData
+                 AndHTTPHeaderField:nil
+                     AndSuccessBack:^(id _responseData) {
+                     //注册成功
+                     if (_responseData) {
+                         [YJProgressHUD showSuccess:@"注册成功"];
+                         ZWWLog(@"====%@",_responseData);
+                         //登录
+                         [[LoginViewController shareInstance] logininApp:dicData];
+                     }
+                     else{
+                         [YJProgressHUD showInfo: @"注册失败"];
+                     }
+                 }
+                     AndFailureBack:^(NSString *_strError) {
+                         ZWWLog(@"注册失败！详见：%@",_strError);
+                         [YJProgressHUD showError:_strError];
+                     }
+                      WithisLoading:YES];
+}
+
+
+//MARK: - UITextFieldDelegate
+-(BOOL)textField:(UITextField *)textField shouldChangeCharactersInRange:(NSRange)range replacementString:(NSString *)string{
+    // [S] 禁止用户切换键盘为Emoji表情
+    if (textField.isFirstResponder) {
+        if ([textField.textInputMode.primaryLanguage isEqual:@"emoji"] || textField.textInputMode.primaryLanguage == nil) {
+            return NO;
+        }
+    }
+    // [E] 禁止用户切换键盘为Emoji表情
+    
+    NSUInteger length = textField.text.length;
+    NSUInteger strLength = string.length;
+    
+    //MARK:密码长度限制
+    if(strLength != 0 && textField == self.txtPwd && length >= 20){
+        return NO;
+    }
+    
+    //MARK:邮箱长度
+    else if(strLength != 0 && textField == self.txtEmail && length >= 35){
+        return NO;
+    }
+    
+    //MARK:昵称长度
+    else if(strLength != 0 && textField == self.txtNickname && length >= kChineseLen){
+        return NO;
+    }
+    
+    //MARK:邀请码长度
+    else if(strLength != 0 && textField == self.txtCode && length >= 20){
+        return NO;
+    }
+    
+    //回车注册
+    if ([string isEqualToString:@"\n"]) {
+        [self btnRegisterAction:nil];
+    }
+    
+    return YES;
+}
+
+-(void)textFieldDidBeginEditing:(UITextField *)textField{
+    [self setHighLightStyle:textField];
+}
+
+-(void)setHighLightStyle:(UITextField *)txtCurrent{
+    
+    ANCustomTextField *_txtField;
+    for (UIView *_view in [self.view subviews]) {
+        if ([_view isKindOfClass:[ANCustomTextField classForCoder]]) {
+            _txtField = (ANCustomTextField *)_view;
+            
+            //当前编辑文本宽，底部线高亮
+            if (_txtField == txtCurrent) {
+                [_txtField.bottomLine setBackgroundColor:K_HEAD_MENU_LINE_COLOR];
+            }
+            else{
+                [_txtField.bottomLine setBackgroundColor:K_APP_SPLIT_LINE_COLOR];
+            }
+        }
+        else{ continue; }
+    }
+}
+- (BOOL)textFieldShouldReturn:(UITextField *)textField{
+    if (textField == self.txtNickname) {
+        [textField resignFirstResponder];
+        //过滤非汉字字符
+        textField.text = [self filterCharactor:textField.text withRegex:@"[^\u4e00-\u9fa5]"];
+
+        if (textField.text.length >= 4) {
+            textField.text = [textField.text substringToIndex:4];
+        }
+        [YJProgressHUD showError:@"请输入中文"];
+        return NO;
+
+    }else{
+        return YES;
+    }
+}
+- (void)textFiledEditChanged:(id)notification{
+    UITextRange *selectedRange = self.txtNickname.markedTextRange;
+    UITextPosition *position = [self.txtNickname positionFromPosition:selectedRange.start offset:0];
+    if (!position) { // 没有高亮选择的字
+        //过滤非汉字字符
+        self.txtNickname.text = [self filterCharactor:self.txtNickname.text withRegex:@"[^\u4e00-\u9fa5]"];
+
+        if (self.txtNickname.text.length >= 4) {
+            self.txtNickname.text = [self.txtNickname.text substringToIndex:4];
+        }
+    }else { //有高亮文字
+        //do nothing
+    }
+}
+//根据正则，过滤特殊字符
+- (NSString *)filterCharactor:(NSString *)string withRegex:(NSString *)regexStr{
+    NSString *searchText = string;
+    NSError *error = NULL;
+    NSRegularExpression *regex = [NSRegularExpression regularExpressionWithPattern:regexStr options:NSRegularExpressionCaseInsensitive error:&error];
+    NSString *result = [regex stringByReplacingMatchesInString:searchText options:NSMatchingReportCompletion range:NSMakeRange(0, searchText.length) withTemplate:@""];
+    return result;
+}
+-(void)dealloc{
+    [[NSNotificationCenter defaultCenter] removeObserver:self];
+}
+@end

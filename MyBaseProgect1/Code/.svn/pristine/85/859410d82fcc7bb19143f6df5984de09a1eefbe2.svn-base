@@ -1,0 +1,32 @@
+//
+//  lvListTableViewCell.m
+//  快猪
+//
+//  Created by 魏冰杰 on 2019/1/21.
+//  Copyright © 2019年 时磊. All rights reserved.
+//
+
+#import "lvListTableViewCell.h"
+
+@implementation lvListTableViewCell
+
++ (instancetype)createlvListTableViewCellInit {
+    
+    NSArray *nibView = [[NSBundle mainBundle] loadNibNamed:NSStringFromClass([lvListTableViewCell class]) owner:self options:nil];
+    
+    return [nibView objectAtIndex:0];
+}
+
+
+- (void)awakeFromNib {
+    [super awakeFromNib];
+    // Initialization code
+}
+
+- (void)setSelected:(BOOL)selected animated:(BOOL)animated {
+    [super setSelected:selected animated:animated];
+
+    // Configure the view for the selected state
+}
+
+@end

@@ -1,0 +1,16 @@
+//
+//  UpLoadViewController.h
+//  快猪
+//
+//  Created by layne on 2018/4/29.
+//  Copyright © 2018年 时磊. All rights reserved.
+//
+
+@class RefreshTableViewController;
+
+/**
+ * 上传
+ */
+@interface UpLoadViewController : RefreshTableViewController
+
+@end

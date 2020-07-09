@@ -1,0 +1,786 @@
+//
+//  UserViewController.m
+//  KuaiZhu
+//
+//  Created by apple on 2019/10/4.
+//  Copyright © 2019 su. All rights reserved.
+//
+
+#import "UserViewController.h"
+
+#import "SettingVC.h"          //设置
+#import "InfosModel.h"         //用户信息模型
+
+#import "HelpVC.h"             //帮助
+#import "UserVipVC.h"             //VIP会员中心
+
+#import "MyUserCollectionVC.h"
+//我的上传
+#import "MyUploadViewController.h"
+//我的缓存
+#import "DownloadViewController.h"
+//我的钱包
+#import "WalletViewController.h"
+//我的粉丝、我的关注
+#import "FansViewController.h"
+//获赞
+#import "CustomIOS7AlertView.h"
+#import "PriseView.h"
+
+#import "KZMyOperationCell.h"
+#import "KZMyAdCell.h"
+#import "KZMyOtherCell.h"
+
+#import "ZWUserDetialVC.h"
+
+#define NAVBAR_COLORCHANGE_POINT (-IMAGE_HEIGHT + K_APP_NAVIGATION_BAR_HEIGHT*2)
+#define IMAGE_HEIGHT 280
+#define SCROLL_DOWN_LIMIT 25
+#define LIMIT_OFFSET_Y -(IMAGE_HEIGHT + SCROLL_DOWN_LIMIT)
+
+@interface UserViewController ()<UITableViewDelegate,UITableViewDataSource,PriseViewDelegate>{
+    NSInteger userId;
+}
+
+@property (nonatomic, strong) InfosModel *infoModel;
+@property (nonatomic, strong) UIButton *btnSet;
+@property (nonatomic, strong) UILabel *labTitle;
+
+@property (nonatomic, strong) UITableView *tableView;
+@property (nonatomic, strong) UIImageView *imgView;
+
+@property (nonatomic, strong) NSArray *listArr;
+
+//我的评论,我的关注,我的喜欢,我的历史
+@property (nonatomic, strong) UIView *myActionView;
+
+////////////////////////////////////////////////
+//头像,昵称信息
+@property (nonatomic, strong) UIView *myInfoView;
+@property (nonatomic, strong) UIImageView *headImage;
+@property (nonatomic, strong) UILabel *nameLabel;
+@property (nonatomic, strong) UIButton *infoBtn;
+
+////////////////////////////////////////////////
+/** 关注 */
+@property (nonatomic, strong) UILabel *labFocus;
+/** 粉丝 */
+@property (nonatomic, strong) UILabel *labFans;
+/** 喜欢 */
+@property (nonatomic, strong) UILabel *labLike;
+/** 获赞 */
+@property (nonatomic, strong) UILabel *labGood;
+
+@property (nonatomic, strong) CustomIOS7AlertView *coustomAlert;
+@property (nonatomic, strong) PriseView *priseView;//点赞弹框
+@end
+
+@implementation UserViewController
+
+static NSString * const k_tableview_operalCell_identifier = @"tableview_operalCell_identifier";
+static NSString * const k_tableview_adCell_identifier = @"tableview_adCell_identifier";
+static NSString * const k_tableview_otherCell_identifier = @"tableview_otherCell_identifier";
+-(void)dealloc{
+    [[NSNotificationCenter defaultCenter] removeObserver:self];
+}
+- (void)viewDidLoad {
+    [super viewDidLoad];
+    [self initView];
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(refreshTableView:) name:@"loginApp" object:nil];
+}
+- (void)refreshTableView: (NSNotification *) notification {
+    __weak typeof(self) weakSelf = self;
+    __block typeof(self) blockSelf = self;
+    userId = [UserModel shareInstance]?[UserModel shareInstance].id:0;
+    [Utils getInfosModelForUserId:userId
+                       andLoading:NO
+                    andFinishback:^(InfosModel * _Nullable model) {
+                        blockSelf->_infoModel = model;
+                        dispatch_async(dispatch_get_main_queue(), ^{
+                            [weakSelf updateTopInfo];
+                        });
+                    }];
+}
+- (void)viewWillAppear:(BOOL)animated {
+    [super viewWillAppear:animated];
+    [self wr_setNavBarBackgroundAlpha:0];
+    [self wr_setNavBarBarTintColor:[UIColor whiteColor]];
+    userId = [UserModel shareInstance]?[UserModel shareInstance].id:0;
+    if ([UserModel userIsLogin]) {
+        __weak typeof(self) weakSelf = self;
+        __block typeof(self) blockSelf = self;
+        [Utils getInfosModelForUserId:userId
+                           andLoading:NO
+                        andFinishback:^(InfosModel * _Nullable model) {
+                            blockSelf->_infoModel = model;
+                            dispatch_async(dispatch_get_main_queue(), ^{
+                                [weakSelf updateTopInfo];
+                            });
+                        }];
+    }
+}
+-(void)viewWillDisappear:(BOOL)animated{
+    [super viewWillDisappear:animated];
+}
+//MARK: - initView
+- (void)initView {
+    [self.view setBackgroundColor:[UIColor whiteColor]];
+    [self.view addSubview:self.tableView];
+    [self.tableView addSubview:self.imgView];
+    [self.imgView addSubview:self.myInfoView];
+    [self.imgView addSubview:self.myActionView];
+    [self.imgView addSubview:self.btnSet];
+    [self.imgView addSubview:self.labTitle];
+    self.tableView.contentInset = UIEdgeInsetsMake(IMAGE_HEIGHT-64, 0, 0, 0);
+}
+- (UIImage *)imageWithImageSimple:(UIImage *)image scaledToSize:(CGSize)newSize
+{
+    UIGraphicsBeginImageContext(CGSizeMake(newSize.width*2, newSize.height*2));
+    [image drawInRect:CGRectMake (0, 0, newSize.width*2, newSize.height*2)];
+    UIImage* newImage = UIGraphicsGetImageFromCurrentImageContext();
+    UIGraphicsEndImageContext();
+    return newImage;
+}
+
+//更新信息
+-(void)updateTopInfo{
+    if ([UserModel userIsLogin] && self.infoModel) {
+        if(self.infoModel.photo != nil && ![self.infoModel.photo isEqualToString:@""]){
+            NSURL *url = [NSURL URLWithString:self.infoModel.photo];
+            [self.headImage setImageWithURL:url placeholderImage:KZImage(@"我的")];
+        }
+        self.nameLabel.text = self.infoModel.name;
+        
+        self.labLike.text = @"0";
+        self.labGood.text = [NSString stringWithFormat:@"%ld",(long)self.infoModel.heartCount];
+        self.labFans.text = [NSString stringWithFormat:@"%ld",(long)self.infoModel.fansCount];
+        self.labFocus.text = [NSString stringWithFormat:@"%ld",(long)self.infoModel.followCount];
+    }
+    else{
+        self.headImage.image = KZImage(@"我的");
+        self.nameLabel.text = @"登录/注册";
+        self.labLike.text = @"0";
+        self.labGood.text = @"0";
+        self.labFans.text = @"0";
+        self.labFocus.text = @"0";
+    }
+}
+#pragma mark - <UITableViewDelegate>
+- (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView
+{
+    return 3;
+}
+- (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
+{
+    switch (section) {
+        case 0:
+        case 1:
+            return 1;
+        case 2:
+            return self.listArr.count;
+        default:
+            return 0;
+    }
+}
+- (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
+{
+    switch (indexPath.section) {
+        case 0:
+        {
+            KZMyOperationCell *cell = [tableView dequeueReusableCellWithIdentifier:k_tableview_operalCell_identifier];
+            cell.selectionStyle = UITableViewCellSelectionStyleNone;
+            
+            cell.cellClickBlock = ^(NSInteger index) {
+                switch (index) {
+                    //MARK:我的关注  评论
+                    case 0:
+                    {
+                       MyUserCollectionVC *vc = [[MyUserCollectionVC alloc]init];
+                        vc.selectIndex = 2;
+                        [self.navigationController pushViewController:vc animated:YES];
+                    }
+                        break;
+                    //MARK:我的喜欢   关注
+                    case 1:
+                    {
+                        MyUserCollectionVC *vc = [[MyUserCollectionVC alloc]init];
+                        vc.selectIndex = 0;
+                        [self.navigationController pushViewController:vc animated:YES];
+                    }
+                        break;
+                    //MARK:我的评论  喜欢
+                    case 2:
+                        {
+                            MyUserCollectionVC *vc = [[MyUserCollectionVC alloc]init];
+                            vc.selectIndex = 1;
+                            [self.navigationController pushViewController:vc animated:YES];
+                        }
+                        break;
+                    //MARK:我的历史
+                    case 3:
+                        {
+                            MyUserCollectionVC *vc = [[MyUserCollectionVC alloc]init];
+                            vc.selectIndex = 3;
+                            [self.navigationController pushViewController:vc animated:YES];
+                        }
+                        break;
+                    default:
+                        break;
+                }
+            };
+            return cell;
+        }
+            break;
+        case 1:
+        {
+            KZMyAdCell *cell = [tableView dequeueReusableCellWithIdentifier:k_tableview_adCell_identifier];
+            cell.selectionStyle = UITableViewCellSelectionStyleNone;
+            return cell;
+        }
+            break;
+        case 2:
+        {
+            KZMyOtherCell *cell = [tableView dequeueReusableCellWithIdentifier:k_tableview_otherCell_identifier];
+            cell.selectionStyle = UITableViewCellSelectionStyleNone;
+            NSDictionary *dic = self.listArr[indexPath.row];
+            [cell.imageHeader setImage:KZImage(dic[@"image"])];
+            [cell.titleLable setText:dic[@"title"]];
+            cell.indexPath = indexPath;
+            return cell;
+        }
+            break;
+        default:
+            break;
+    }
+    return nil;
+}
+- (CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath
+{
+    switch (indexPath.section) {
+        case 0:
+        case 1:
+            return 107.0f;
+        case 2:
+            return 50.0f;
+        default:
+            break;
+    }
+    return 0;
+}
+- (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath
+{
+    [tableView deselectRowAtIndexPath:indexPath animated:YES];
+    switch (indexPath.section) {
+        //MARK:我的钱包
+        case 1:
+        {
+            if (![UserModel userIsLogin]) {
+                [self userToLogin:nil];
+                return;
+            }
+               
+            WalletViewController *walletVC = [[WalletViewController alloc] init];
+            [self.navigationController pushViewController:walletVC animated:YES];
+        }
+            break;
+        case 2:
+        {
+            switch (indexPath.row) {
+                case 0:
+                {
+                    if (![UserModel userIsLogin]) {
+                        [self userToLogin:nil];
+                        return;
+                    }
+                   // [YJProgressHUD showMessage:@"即将推出,敬请期待"];
+                    UserVipVC *vc = [[UserVipVC alloc] init];
+                    vc.userId = [NSString stringWithFormat:@"%lD",(long)userId];
+                    vc.userName = [UserModel shareInstance].name;
+                    vc.infoModel = self.infoModel;
+                    [self.navigationController pushViewController:vc animated:YES];
+                }
+                     break;
+                //MARK:我的上传
+                case 1:
+                {
+                    if (![UserModel userIsLogin]) {
+                        [self userToLogin:nil];
+                        return;
+                    }
+                    MyUploadViewController *myuploadVC = [[MyUploadViewController alloc] init];
+                    [self.navigationController pushViewController:myuploadVC animated:YES];
+                }
+                    break;
+                //MARK:我的缓存
+                case 2:
+                {
+                    if (![UserModel userIsLogin]) {
+                        [self userToLogin:nil];
+                        return;
+                    }
+                    
+                    DownloadViewController *downloadVC = [[DownloadViewController alloc] init];
+                    [self.navigationController pushViewController:downloadVC animated:YES];
+                }
+                    break;
+                //MARK:帮助
+                case 3:
+                {
+                     HelpVC *helpVC = [[HelpVC alloc] init];
+                     [self.navigationController pushViewController:helpVC animated:YES];
+                }
+                    break;
+                //MARK:注销登录
+                case 4:
+                {
+                    if (![UserModel userIsLogin]) return;
+                    
+                    UIAlertController *alertVC = [UIAlertController alertControllerWithTitle:@"确认退出?"
+                                                                                       message:nil
+                                                                                preferredStyle:UIAlertControllerStyleAlert];
+                                
+                    UIAlertAction *cancle = [UIAlertAction actionWithTitle:@"取消" style:UIAlertActionStyleCancel handler:nil];
+                    UIAlertAction *ok = [UIAlertAction actionWithTitle:@"确定" style:UIAlertActionStyleDestructive handler:^(UIAlertAction * _Nonnull action) {
+                         [self logOut];
+                    }];
+                    [alertVC addAction:cancle];
+                    [alertVC addAction:ok];
+                    
+                    [self presentViewController:alertVC animated:YES completion:nil];
+                }
+                    break;
+                    
+                default:
+                    break;
+            }
+        }
+            break;
+            
+        default:
+            break;
+    }
+}
+
+
+//MARK: - PriseViewDelegate
+-(void)clickOkEvent{
+    [self.coustomAlert close];
+}
+
+
+//MARK: - lazy load 
+-(NSArray *)listArr {
+    if (!_listArr) {
+        _listArr = @[
+            @{
+                @"title":@"vip会员",
+                @"image":@"VIP",
+            },
+            @{
+                @"title":@"我的上传",
+                @"image":@"mine_upload_icon",
+            },
+            @{
+                @"title":@"我的缓存",
+                @"image":@"mine_cache_icon",
+            },
+            @{
+                @"title":@"帮助",
+                @"image":@"mine_help_icon",
+            },
+            @{
+                @"title":@"注销登录",
+                @"image":@"mine_exit_icon",
+            },
+        ];
+    }
+    
+    return _listArr;
+}
+
+-(UILabel *)labTitle{
+    if (!_labTitle) {
+        CGFloat h = 21;
+        CGFloat y = K_APP_NAVIGATION_BAR_HEIGHT + (44 - h) * 0.5;
+        _labTitle = [BaseUIView createLable:CGRectMake(0, y, K_APP_WIDTH, h)
+                                    AndText:@"我的"
+                               AndTextColor:UIColor.whiteColor
+                                 AndTxtFont:ADOBE_FONT(24)
+                         AndBackgroundColor:nil];
+        _labTitle.textAlignment = NSTextAlignmentCenter;
+    }
+    return _labTitle;
+}
+
+-(UIButton *)btnSet{
+    if (!_btnSet) {
+        CGFloat w = 35;
+        CGFloat h = 35;
+        CGFloat x = K_APP_WIDTH - w - 15;
+        CGFloat y = K_APP_NAVIGATION_BAR_HEIGHT + (44 - h) * 0.5;
+        _btnSet =[BaseUIView createBtn:CGRectMake(x, y, w, h)
+                                 AndTitle:nil
+                            AndTitleColor:nil
+                               AndTxtFont:nil
+                                 AndImage:[UIImage imageNamed:@"mine_set_icon"]
+                       AndbackgroundColor:nil
+                           AndBorderColor:nil
+                          AndCornerRadius:0
+                             WithIsRadius:NO
+                      WithBackgroundImage:nil
+                          WithBorderWidth:0];
+        
+        [_btnSet addTarget:self action:@selector(btnRightAction:) forControlEvents:UIControlEventTouchUpInside];
+    }
+    return _btnSet;
+}
+
+- (UITableView *)tableView
+{
+    if (_tableView == nil) {
+        CGFloat y = 0;
+        CGRect frame = CGRectMake(0, y, K_APP_WIDTH, K_APP_HEIGHT - K_APP_TABBAR_HEIGHT - y);
+        _tableView = [[UITableView alloc] initWithFrame:frame
+                                                  style:UITableViewStylePlain];
+        _tableView.delegate = (id <UITableViewDelegate>)self;
+        _tableView.dataSource = (id <UITableViewDataSource>)self;
+        [_tableView setSeparatorStyle:UITableViewCellSeparatorStyleNone];
+        [_tableView setBackgroundColor:RGBCOLOR(218, 227, 255)];
+        [_tableView registerClass:[KZMyOperationCell class] forCellReuseIdentifier:k_tableview_operalCell_identifier];
+        [_tableView registerClass:[KZMyAdCell class] forCellReuseIdentifier:k_tableview_adCell_identifier];
+        [_tableView registerClass:[KZMyOtherCell class] forCellReuseIdentifier:k_tableview_otherCell_identifier];
+        _tableView.tableFooterView = [UIView new];
+    }
+    return _tableView;
+}
+
+- (UIImageView *)imgView
+{
+    if (_imgView == nil) {
+        _imgView = [[UIImageView alloc] initWithFrame:CGRectMake(0, -IMAGE_HEIGHT, K_APP_WIDTH, IMAGE_HEIGHT)];
+        _imgView.contentMode = UIViewContentModeScaleAspectFill;
+        _imgView.clipsToBounds = YES;
+        _imgView.userInteractionEnabled = YES;
+        _imgView.image = [self imageWithImageSimple:[UIImage imageNamed:@"mine_head_icon"] scaledToSize:CGSizeMake(K_APP_WIDTH, IMAGE_HEIGHT+SCROLL_DOWN_LIMIT)];
+    }
+    return _imgView;
+}
+
+- (UIView *)myActionView
+{
+    if (!_myActionView) {
+        CGRect rect = CGRectMake(15, 200, K_APP_WIDTH - 2*15, 64);
+        _myActionView = [[UIView alloc] initWithFrame:rect];
+        [_myActionView setBackgroundColor:[UIColor whiteColor]];
+        
+        [_myActionView.layer setMasksToBounds:YES];
+        [_myActionView.layer setCornerRadius:13];
+        
+        NSInteger i = 0;
+        UIButton *btnInfo;
+        NSArray *arrInfo = @[@"关注",@"粉丝",@"喜欢",@"称赞"];
+        
+        CGFloat x = 0;
+        CGFloat w = rect.size.width/arrInfo.count;
+        for (NSString *name in arrInfo) {
+            x = i * w;
+            btnInfo = [BaseUIView createBtn:CGRectMake(x, 0, w, rect.size.height)
+                                   AndTitle:name
+                              AndTitleColor:[UIColor colorWithHexString:@"#A7A7A8"]
+                                 AndTxtFont:ADOBE_FONT(15)
+                                   AndImage:nil
+                         AndbackgroundColor:nil
+                             AndBorderColor:nil
+                            AndCornerRadius:0
+                               WithIsRadius:NO
+                        WithBackgroundImage:nil
+                            WithBorderWidth:0];
+            
+            btnInfo.tag = i;
+            btnInfo.titleEdgeInsets = UIEdgeInsetsMake(0, 0, 12, 0);
+            
+            [btnInfo addTarget:self action:@selector(btnTopAction:) forControlEvents:UIControlEventTouchUpInside];
+            [_myActionView addSubview:btnInfo];
+            
+            CGFloat top = 13;
+            switch (i) {
+                case 0:
+                {
+                    [btnInfo addSubview:self.labFocus];
+                    [self.labFocus mas_makeConstraints:^(MASConstraintMaker *make) {
+                        make.left.right.mas_equalTo(0);
+                        make.top.mas_equalTo(top);
+                    }];
+                }
+                    break;
+                    
+                case 1:
+                    {
+                        [btnInfo addSubview:self.labFans];
+                        [self.labFans mas_makeConstraints:^(MASConstraintMaker *make) {
+                            make.left.right.mas_equalTo(0);
+                            make.top.mas_equalTo(top);
+                        }];
+                    }
+                        break;
+                    
+                case 2:
+                    {
+                        [btnInfo addSubview:self.labLike];
+                        [self.labLike mas_makeConstraints:^(MASConstraintMaker *make) {
+                            make.left.right.mas_equalTo(0);
+                            make.top.mas_equalTo(top);
+                        }];
+                    }
+                        break;
+                    
+                case 3:
+                    {
+                        [btnInfo addSubview:self.labGood];
+                        [self.labGood mas_makeConstraints:^(MASConstraintMaker *make) {
+                            make.left.right.mas_equalTo(0);
+                            make.top.mas_equalTo(top);
+                        }];
+                    }
+                        break;
+                default:
+                    break;
+            }
+            btnInfo.contentHorizontalAlignment = UIControlContentHorizontalAlignmentCenter;
+            btnInfo.contentVerticalAlignment = UIControlContentVerticalAlignmentBottom;
+            
+            i++;
+        }
+    }
+    return _myActionView;
+}
+
+- (UIView *)myInfoView
+{
+    if (!_myInfoView) {
+        CGRect rect = CGRectMake(0, K_APP_NAVIGATION_BAR_HEIGHT + ([UIDevice currentDevice].isiPhoneX?40:60), K_APP_WIDTH, 56);
+        _myInfoView = [[UIView alloc] initWithFrame:rect];
+        _myInfoView.backgroundColor = UIColor.clearColor;
+        _myInfoView.userInteractionEnabled = YES;
+        
+        //点击事件
+        UITapGestureRecognizer *tap = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(loginOrRegisterAction:)];
+        [_myInfoView addGestureRecognizer:tap];
+        
+        [_myInfoView addSubview:self.headImage];
+        [_myInfoView addSubview:self.nameLabel];
+        [_myInfoView addSubview:self.infoBtn];
+    }
+    return _myInfoView;
+}
+
+- (UIImageView *)headImage
+{
+    if (!_headImage) {
+        _headImage = [[UIImageView alloc] initWithFrame:CGRectMake(18, 0, 56, 56)];
+        [_headImage setImage:KZImage(@"我的")];
+        //[_headImage setContentMode:UIViewContentModeScaleAspectFit];
+        [_headImage.layer setCornerRadius:28];
+        [_headImage.layer setMasksToBounds:YES];
+    }
+    return _headImage;
+}
+
+- (UILabel *)nameLabel
+{
+    if (!_nameLabel) {
+        _nameLabel = [[UILabel alloc] initWithFrame:CGRectMake(92, 13, 200, 30)];
+        [_nameLabel setFont:[UIFont boldSystemFontOfSize:15]];
+        [_nameLabel setText:@"登录/注册"];
+    }
+    return _nameLabel;
+}
+
+- (UIButton *)infoBtn
+{
+    if (!_infoBtn) {
+        _infoBtn = [UIButton buttonWithType:UIButtonTypeCustom];
+        CGFloat w = 65;
+        CGFloat x = K_APP_WIDTH - w - 15;
+        [_infoBtn setFrame:CGRectMake(x, 0, w, 56)];
+        [_infoBtn setTitle:@"个人中心" forState:UIControlStateNormal];
+        [_infoBtn setTitleColor:UIColor.blackColor forState:UIControlStateNormal];
+        _infoBtn.titleLabel.font = ADOBE_FONT(15);
+        _infoBtn.contentHorizontalAlignment = UIControlContentHorizontalAlignmentCenter;
+        [_infoBtn addTarget:self action:@selector(infoAction:) forControlEvents:UIControlEventTouchUpInside];
+    }
+    return _infoBtn;
+}
+-(UILabel *)labFocus{
+    if (!_labFocus) {
+        _labFocus = [[UILabel alloc] init];
+        _labFocus.text = @"0";
+        _labFocus.textColor = [UIColor colorWithHexString:@"#000000"];
+        _labFocus.font = ADOBE_FONT(21);
+        _labFocus.textAlignment = NSTextAlignmentCenter;
+    }
+    return _labFocus;
+}
+-(UILabel *)labFans{
+    if (!_labFans) {
+        _labFans = [[UILabel alloc] init];
+        _labFans.text = @"0";
+        _labFans.textColor = [UIColor colorWithHexString:@"#000000"];
+        _labFans.font = ADOBE_FONT(21);
+        _labFans.textAlignment = NSTextAlignmentCenter;
+    }
+    return _labFans;
+}
+
+-(UILabel *)labLike{
+    if (!_labLike) {
+        _labLike = [[UILabel alloc] init];
+        _labLike.text = @"0";
+        _labLike.textColor = [UIColor colorWithHexString:@"#000000"];
+        _labLike.font = ADOBE_FONT(21);
+        _labLike.textAlignment = NSTextAlignmentCenter;
+    }
+    return _labLike;
+}
+
+-(UILabel *)labGood{
+    if (!_labGood) {
+        _labGood = [[UILabel alloc] init];
+        _labGood.text = @"0";
+        _labGood.textColor = [UIColor colorWithHexString:@"#000000"];
+        _labGood.font = ADOBE_FONT(21);
+        _labGood.textAlignment = NSTextAlignmentCenter;
+    }
+    return _labGood;
+}
+
+
+#pragma mark - UIScrollViewDelgate
+
+- (void)scrollViewDidScroll:(UIScrollView *)scrollView
+{
+    CGFloat offsetY = scrollView.contentOffset.y;
+    
+    if (offsetY > NAVBAR_COLORCHANGE_POINT)
+    {
+        CGFloat alpha = (offsetY - NAVBAR_COLORCHANGE_POINT) / K_APP_NAVIGATION_BAR_HEIGHT;
+        [self wr_setNavBarBackgroundAlpha:alpha];
+    }
+    else
+    {
+        [self wr_setNavBarBackgroundAlpha:0];
+    }
+    
+    //限制下拉的距离
+    if(offsetY < LIMIT_OFFSET_Y) {
+        [scrollView setContentOffset:CGPointMake(0, LIMIT_OFFSET_Y)];
+    }
+    
+    // 改变图片框的大小 (上滑的时候不改变)
+    // 这里不能使用offsetY，因为当（offsetY < LIMIT_OFFSET_Y）的时候，y = LIMIT_OFFSET_Y 不等于 offsetY
+    CGFloat newOffsetY = scrollView.contentOffset.y;
+    if (newOffsetY < -IMAGE_HEIGHT)
+    {
+        self.imgView.frame = CGRectMake(0, newOffsetY, K_APP_WIDTH, -newOffsetY);
+    }
+}
+//MARK: - 登录、注册
+-(void)loginOrRegisterAction:(UITapGestureRecognizer *)sender{
+    if (![UserModel userIsLogin]) {
+        [self userToLogin:nil];
+    }
+}
+
+
+//MARK: - 退出登录
+- (void)logOut{
+    [UserModel removeUserData];
+    
+    //更新信息
+    [self updateTopInfo];
+}
+
+
+//MARK: - 个人中心
+- (void)infoAction:(UIButton *)sender
+{
+    if (![UserModel userIsLogin]) {
+        [self userToLogin:nil];
+        return;
+    }
+
+  ZWUserDetialVC * vc = [[ZWUserDetialVC alloc]init];
+  vc.userId = [NSString stringWithFormat:@"%lD",(long)userId];
+  vc.userName = [UserModel shareInstance].name;
+  vc.infoModel = self.infoModel;
+  
+  [self.navigationController pushViewController:vc animated:YES];
+}
+
+
+//MARK: - 设置
+- (void)btnRightAction:(UIButton *)sender
+{
+   SettingVC *VC = [[SettingVC alloc] init];
+   [self.navigationController pushViewController:VC animated:YES];
+}
+
+
+//MARK: - 顶部点击事件
+-(void)btnTopAction:(UIButton *)sender{
+    switch (sender.tag) {
+        //MARK:关注
+        case 0:
+        {
+            FansViewController *fansVC = [[FansViewController alloc] initWithUser:[NSString stringWithFormat:@"%ld",(long)self.infoModel.userId] AndTitle:@"关注"];
+            [self.navigationController pushViewController:fansVC animated:YES];
+        }
+            break;
+        //MARK:粉丝
+        case 1:
+        {
+            FansViewController *fansVC = [[FansViewController alloc] initWithUser:[NSString stringWithFormat:@"%ld",(long)self.infoModel.userId] AndTitle:@"粉丝"];
+            fansVC.selectIndex = 1;
+            [self.navigationController pushViewController:fansVC animated:YES];
+        }
+            break;
+        //MARK:喜欢
+        case 2:
+            {
+                ZWUserDetialVC *vc = [[ZWUserDetialVC alloc] init];
+                vc.userId = [NSString stringWithFormat:@"%lD",(long)userId];
+                vc.userName = [UserModel shareInstance].name;
+                vc.infoModel = self.infoModel;
+                vc.type = 100;
+                [self.navigationController pushViewController:vc animated:YES];
+            }
+                break;
+        //MARK:获赞
+        case 3:
+        {
+            if (! _coustomAlert) {
+                self.priseView = [PriseView createPriseViewInit];
+                self.priseView.delegate = (id<PriseViewDelegate>)self;
+               
+                CustomIOS7AlertView *alertView = [[CustomIOS7AlertView alloc] init];
+                [alertView setContainerView:_priseView];
+               
+                _priseView.userName.text = _infoModel.name;
+                _priseView.desLable.text = [NSString stringWithFormat:@"共获得%ld个赞",(long)_infoModel.heartCount];
+                [alertView setButtonTitles:nil];
+                [alertView setDelegate:(id<CustomIOS7AlertViewDelegate>)self];
+                [alertView setUseMotionEffects:YES];
+                [alertView show];
+                _coustomAlert = alertView;
+            } else {
+                [_coustomAlert show];
+            }
+        }
+            break;
+            
+        default:
+            break;
+    }
+}
+@end
+

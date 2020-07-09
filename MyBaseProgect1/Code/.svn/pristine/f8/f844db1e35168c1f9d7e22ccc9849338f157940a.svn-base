@@ -1,0 +1,516 @@
+//
+//  MainListCollectionViewController.m
+//  KuaiZhu
+//
+//  Created by Ghy on 2019/5/10.
+//  Copyright © 2019年 su. All rights reserved.
+//
+
+#import "MainListCollectionViewController.h"
+
+#import "VideoModel.h"
+#import "ZWMainVideosCell.h"
+#import "VideosAdCell.h"
+
+#import "WaterfallLayout.h"
+#import "MovieDetailModel.h"
+
+#import "ZWMoviseDetailsVC.h"
+
+static CGFloat const cell_margin = 10;
+#define cycleScrollViewHeight ((K_APP_WIDTH - 2 * cell_margin) * 0.5)
+static NSTimeInterval const loop_tme_interval = 2.5;
+static NSString * const newsCellIdentifier = @"ZWMainVideosCell";
+static NSString * const newsAdCellIdentifier = @"VideosAdCell";
+
+static NSString * const k_collection_top_ad_identify = @"collection_top_ad_identify";
+static NSString * const k_collection_head_view_identify = @"main_list_reusable_view_head_view";
+static NSString * const k_collection_head2_view_identify = @"main_list_reusable_view_head2_view";
+
+@interface MainListCollectionViewController ()<UICollectionViewDelegate,UICollectionViewDataSource,UICollectionViewDelegateFlowLayout,WaterfallLayoutDelegate,TYCyclePagerViewDataSource,TYCyclePagerViewDelegate,MoviesDetailsVCDelegate>{
+    NSString *_strLayouType;
+}
+
+@property(nonatomic, assign) BOOL hasNextPage; //是否加载更多
+@property(nonatomic, assign) NSInteger pIndex; //页码
+@property(nonatomic, strong) NSMutableArray *totalArray;  //列表视频数据
+@property(nonatomic, assign) NSInteger  lastId;           //支持分段读取，传视频列表中的最后一个值
+@property(nonatomic, assign) NSInteger  lastAid;          //支持分段读取，传广告列表中的最后一个值
+@property(nonatomic, strong) WaterfallLayout *wlayout;    //瀑布流Layer
+@property(nonatomic,strong) TYCyclePagerView *topAdScrollView; //顶部广告
+@property(nonatomic,strong) TYPageControl *pageControl;        //指示点
+@property(nonatomic,  copy) NSArray<Advertisements *> *tADData;
+@property (nonatomic,strong) UIView *emptyView;
+
+@end
+
+@implementation MainListCollectionViewController
+
+- (void)didReceiveMemoryWarning {
+    [super didReceiveMemoryWarning];
+    // Dispose of any resources that can be recreated.
+}
+- (instancetype)initWithType:(NSString *)strType{
+    _strLayouType = strType;
+    if(self = [super initWithCollectionViewLayout:self.wlayout]){
+        //注册
+        [self registerClass];
+        if (@available(iOS 11.0, *)) {
+            self.collectionView.contentInsetAdjustmentBehavior = UIScrollViewContentInsetAdjustmentNever;
+        }
+    }
+    return self;
+}
+- (void)viewDidLoad {
+    [super viewDidLoad];
+    //初始化
+    [self initView];
+    [self loadRequestForAnimation:YES andIsRefresh:YES];
+}
+-(void)viewWillAppear:(BOOL)animated{
+    [super viewWillAppear:animated];
+}
+//MARK: - initView
+-(void)initView{
+    self.pIndex = 0;       //默认第一页
+    self.lastId = 0;
+    self.lastAid = 0;
+    self.hasNextPage = NO;
+    
+    self.collectionView.delegate = self;
+    self.collectionView.dataSource = self;
+    
+    self.collectionView.backgroundColor = [UIColor clearColor];
+    [self.collectionView addSubview:self.emptyView];
+    self.view.backgroundColor = [UIColor clearColor];
+    
+    __weak typeof(self) weakSelf = self;
+    //MARK:下拉刷新
+    weakSelf.collectionView.mj_header = [MJRefreshNormalHeader headerWithRefreshingBlock:^{
+        [weakSelf loadRequestForAnimation:YES andIsRefresh:YES];
+    }];
+    
+    //MARK:上拉加载更多
+    weakSelf.collectionView.mj_footer = [MJRefreshAutoNormalFooter footerWithRefreshingBlock:^{
+        [weakSelf loadRequestForAnimation:YES andIsRefresh:NO];
+    }];
+}
+//注册
+-(void)registerClass{
+    [self.collectionView registerClass:[UICollectionReusableView class]
+            forSupplementaryViewOfKind:UICollectionElementKindSectionHeader
+                   withReuseIdentifier:k_collection_head_view_identify];
+    self.wlayout.headerReferenceSize = CGSizeMake(K_APP_WIDTH, cycleScrollViewHeight);
+    [self.collectionView registerClass:[UICollectionReusableView class]
+            forSupplementaryViewOfKind:UICollectionElementKindSectionHeader
+                   withReuseIdentifier:k_collection_head2_view_identify];
+    [self.collectionView registerNib:[UINib nibWithNibName:@"ZWMainVideosCell" bundle:nil] forCellWithReuseIdentifier:newsCellIdentifier];
+    
+    [self.collectionView registerNib:[UINib nibWithNibName:@"VideosAdCell" bundle:nil] forCellWithReuseIdentifier:newsAdCellIdentifier];
+}
+//MARK:头尾视图
+-(UICollectionReusableView *)collectionView:(UICollectionView *)collectionView viewForSupplementaryElementOfKind:(NSString *)kind atIndexPath:(NSIndexPath *)indexPath{
+    if (indexPath.section == 0) {
+        if([_strLayouType isEqualToString:@"最热"]){
+            UICollectionReusableView *reusableView = [collectionView dequeueReusableSupplementaryViewOfKind:UICollectionElementKindSectionHeader  withReuseIdentifier:k_collection_head_view_identify forIndexPath:indexPath];
+            [reusableView respondsToSelector:@selector(removeAllObjects)];
+            reusableView.frame =CGRectMake(cell_margin, 0, K_APP_WIDTH - 2 * cell_margin, cycleScrollViewHeight - 5);
+            [reusableView addSubview:self.topAdScrollView];
+            [self.topAdScrollView reloadData];
+            return reusableView;
+        }
+        else{
+            UICollectionReusableView *reusableView = [collectionView dequeueReusableSupplementaryViewOfKind:UICollectionElementKindSectionHeader  withReuseIdentifier:k_collection_head2_view_identify forIndexPath:indexPath];
+            [reusableView respondsToSelector:@selector(removeAllObjects)];
+            reusableView.frame =CGRectMake(cell_margin, 0, K_APP_WIDTH - 2 * cell_margin, cycleScrollViewHeight - 5);
+            [reusableView addSubview:self.topAdScrollView];
+            [self.topAdScrollView reloadData];
+            return reusableView;
+        }
+    }
+    ZWWLog(@"代码\n走到\n了这里")
+    return nil;
+}
+-(WaterfallLayout *)wlayout{
+    if (!_wlayout) {
+        _wlayout = [WaterfallLayout waterFallLayoutWithColumnCount:2];
+//        if([_strLayouType isEqualToString:@"最热"]){
+//            _wlayout.headerReferenceSize = CGSizeMake(K_APP_WIDTH, cycleScrollViewHeight);
+//        }
+//        else{
+//            _wlayout.headerReferenceSize = CGSizeMake(K_APP_WIDTH - 2*cell_margin, cycleScrollViewHeight);
+//        }
+        [_wlayout setColumnSpacing:cell_margin
+                        rowSpacing:cell_margin
+                      sectionInset:UIEdgeInsetsMake(0, cell_margin, cell_margin, cell_margin)];
+        _wlayout.delegate = self;
+    }
+    return _wlayout;
+}
+-(TYCyclePagerView *)topAdScrollView{
+    if (!_topAdScrollView) {
+        CGRect rect = CGRectMake(0, 0, K_APP_WIDTH - 2 * cell_margin, cycleScrollViewHeight);
+        _topAdScrollView = [[TYCyclePagerView alloc] initWithFrame:rect];
+        _topAdScrollView.isInfiniteLoop = YES;                      //循环播放
+        _topAdScrollView.autoScrollInterval = loop_tme_interval;    //间隔时间
+        _topAdScrollView.layer.borderWidth = 0;
+        _topAdScrollView.layer.cornerRadius = 13;
+        _topAdScrollView.layer.masksToBounds = YES;
+        _topAdScrollView.dataSource = self;
+        _topAdScrollView.delegate = self;
+        //注册
+        [_topAdScrollView registerClass:[UICollectionViewCell class] forCellWithReuseIdentifier:k_collection_top_ad_identify];
+        //指示点
+        [_topAdScrollView addSubview:self.pageControl];
+    }
+    return _topAdScrollView;
+}
+
+-(TYPageControl *)pageControl{
+    if (!_pageControl) {
+        CGRect rect = CGRectMake(cell_margin, cycleScrollViewHeight - 30, K_APP_WIDTH - 2 * cell_margin, 30);
+        _pageControl = [[TYPageControl alloc] initWithFrame:rect];
+        _pageControl.hidesForSinglePage = YES;
+        _pageControl.currentPageIndicatorTintColor = [UIColor whiteColor];
+        _pageControl.pageIndicatorTintColor = [[UIColor alloc] colorFromHexInt:0xc5c5c5 AndAlpha:1];
+    }
+    return _pageControl;
+}
+
+-(NSArray<Advertisements *> *)tADData{
+    _tADData = (NSArray<Advertisements *> *)[[NSUserDefaults standardUserDefaults] objectForKey:K_MAIN_AD_DATA];
+    return _tADData;
+}
+//MARK: - 空视图
+-(UIView *)emptyView{
+    if (!_emptyView) {
+        CGFloat h = 150;
+        CGFloat y = (K_APP_HEIGHT - K_APP_TABBAR_HEIGHT - K_APP_NAVIGATION_BAR_HEIGHT - h) * 0.5;
+        CGFloat w = 100;
+        CGFloat x = (K_APP_WIDTH - w) * 0.5;
+        _emptyView = [[UIView alloc] initWithFrame:CGRectMake(x, y, w, h)];
+        //MARK:图片
+        w = 85;
+        h = 103;
+        x = (_emptyView.frame.size.width - w) * 0.5;
+        CGRect rect = CGRectMake(x, 0, w, h);
+        UIImageView *imgBg = [BaseUIView createImage:rect
+                                            AndImage:[UIImage imageNamed:@"search_empty_img.png"] AndBackgroundColor:nil WithisRadius:NO];
+        [_emptyView addSubview:imgBg];
+        
+        //MARK:标题
+        h = 21;
+        w = _emptyView.frame.size.width;
+        x = 0;
+        y = _emptyView.frame.size.height - h - 20;
+        UILabel *labInfo = [BaseUIView createLable:CGRectMake(x, y, w, h)
+                                           AndText:@"暂无数据显示"
+                                      AndTextColor:K_APP_TINT_COLOR
+                                        AndTxtFont:[UIFont systemFontOfSize:16]
+                                AndBackgroundColor:nil];
+        labInfo.textAlignment = NSTextAlignmentCenter;
+        [_emptyView addSubview:labInfo];
+        //默认隐藏
+        [_emptyView setHidden:YES];
+    }
+    return _emptyView;
+}
+//MARK: - 请求数据
+-(void)loadRequestForAnimation:(BOOL)animation andIsRefresh:(BOOL)refresh{
+    //页码
+    if (!refresh) self.pIndex += 1;
+    else self.pIndex = 0;
+    NSString *strUrl = [self getUrlStringIsrefresh:refresh];
+    NSDictionary *dicParams = @{
+                                @"p":[NSString stringWithFormat:@"%lD",(long)self.pIndex],
+                                @"v":[NSString stringWithFormat:@"%lD",(long)self.lastId]
+                                };
+    
+    __block typeof(self) blockSelf = self;
+    __weak typeof(self) weakSelf = self;
+    [Utils getRequestForServerData:strUrl
+                    withParameters:dicParams
+                AndHTTPHeaderField:nil
+                    AndSuccessBack:^(id _responseData) {
+                        ZWWLog(@"首页列表请求成功！详见：%@",_responseData);
+                        //请求成功
+                        if (_responseData) {
+                            if(!blockSelf.totalArray) blockSelf.totalArray = [NSMutableArray array];
+                            if (refresh) [blockSelf.totalArray removeAllObjects];
+                            VideoModel *model = [VideoModel mj_objectWithKeyValues:_responseData];
+                            [Utils mergeData:model.advertisements
+                                 AndInterval:model.advertisementSpan
+                                 andListData:model.videos
+                               withTotalData:blockSelf->_totalArray];
+                            //[weakSelf getPicSize];
+                            [self.collectionView reloadData];
+                            blockSelf.hasNextPage = [model.videos count] > 0?YES:NO;
+                        }
+                        else{
+                            [YJProgressHUD showError:@"请求失败"];
+                        }
+                        [weakSelf stoploadingAnimationForMore:!refresh];
+                    } AndFailureBack:^(NSString *_strError) {
+                        ZWWLog(@"视频列表请求异常！详见：%@",_strError);
+                        [YJProgressHUD showError:_strError];
+                        [weakSelf.collectionView reloadData];
+                        [weakSelf stoploadingAnimationForMore:!refresh];
+                    } WithisLoading:animation];
+}
+
+-(NSString *)getUrlStringIsrefresh:(BOOL)refresh{
+    //最热==默认最热 VideoHotestPage
+    NSString *strUrl = [NSString stringWithFormat:@"%@VideoHotestPage",K_APP_STATIC_HOST];
+    if ([_strLayouType isEqualToString:@"发现"]) {
+        //只有静态接口
+        strUrl = [NSString stringWithFormat:@"%@VideoFindPage",K_APP_STATIC_HOST];
+    }
+    else if([_strLayouType isEqualToString:@"最新"]){
+        strUrl = [NSString stringWithFormat:@"%@VideoLatestPage",K_APP_STATIC_HOST];
+    }
+    ///VideoHotestPage
+    return strUrl;
+}
+- (void)stoploadingAnimationForMore:(BOOL)loadMore{
+    dispatch_async(dispatch_get_main_queue(), ^{
+        //结束刷新
+        if(loadMore) {
+            if (!self.hasNextPage) {
+                [self.collectionView.mj_footer endRefreshingWithNoMoreData];
+            }
+            else{
+                [self.collectionView.mj_footer endRefreshing];
+                [self.collectionView.mj_footer resetNoMoreData];
+            }
+        }
+        else{
+            [self.collectionView.mj_header endRefreshing];
+            [self.collectionView.mj_footer resetNoMoreData];
+            if (!self.hasNextPage) {
+                [self.collectionView.mj_footer endRefreshingWithNoMoreData];
+            }
+        }
+    });
+}
+//MARK: - UICollectionViewDelegate、UICollectionViewDataSource
+-(NSInteger)numberOfSectionsInCollectionView:(UICollectionView *)collectionView{
+    return 1;
+}
+-(CGSize)collectionView:(UICollectionView *)collectionView layout:(UICollectionViewLayout *)collectionViewLayout referenceSizeForHeaderInSection:(NSInteger)section{
+    return CGSizeMake(K_APP_WIDTH, cycleScrollViewHeight);
+}
+-(CGSize)collectionView:(UICollectionView *)collectionView layout:(UICollectionViewLayout *)collectionViewLayout referenceSizeForFooterInSection:(NSInteger)section{
+    return CGSizeMake(0, 0);
+}
+//MARK:列
+-(NSInteger)collectionView:(UICollectionView *)collectionView numberOfItemsInSection:(NSInteger)section{
+    if (self.totalArray && [self.totalArray count] > 0) {
+        [self.emptyView setHidden:YES];
+        return [self.totalArray count];
+    }
+    [self.emptyView setHidden:NO];
+    return 0;
+}
+
+- (UICollectionViewCell *)collectionView:(UICollectionView *)collectionView cellForItemAtIndexPath:(NSIndexPath *)indexPath{
+    NSString *cover;
+    if (self.totalArray && [self.totalArray count] > indexPath.row) {
+        id cellData;
+        Videos *videoModel;
+        Advertisements *adModel;
+        //MARK:广告
+        cellData = [_totalArray objectAtIndex:indexPath.row];
+        if ([cellData isKindOfClass:[Advertisements class]]){
+            adModel = (Advertisements *)cellData;
+            VideosAdCell *adCell = [collectionView dequeueReusableCellWithReuseIdentifier:newsAdCellIdentifier forIndexPath:indexPath];
+            cover = adModel.cover;
+            if([Utils checkTextEmpty:cover]){
+                if ([cover hasSuffix:@"gif"]) {
+                    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+                        [Utils loadGIFImage:cover AndFLAnimatedImageView:adCell.flaADImageView];
+                    });
+                }
+                else{
+                    [adCell.flaADImageView sd_setImageWithURL:[cover mj_url]
+                                             placeholderImage:K_APP_DEFAULT_USER_IMAGE];
+                }
+            }
+            else{
+                [adCell.flaADImageView setImage:K_APP_DEFAULT_USER_IMAGE];
+            }
+            adCell.labTitle.text = adModel.title;
+            return adCell;
+        }
+        //MARK:内容
+        else{
+            ZWMainVideosCell *cell = [collectionView dequeueReusableCellWithReuseIdentifier:newsCellIdentifier forIndexPath:indexPath];
+            videoModel = (Videos *)cellData;
+            cell.DesLb.text = videoModel.title;
+            cover = videoModel.cover;
+            cover = [cover stringByReplacingOccurrencesOfString:@"\\" withString:@"/"];
+            [cell.BgImageView sd_setImageWithURL:[cover mj_url] placeholderImage:K_APP_DEFAULT_IMAGE_SMALL];
+            [cell.BgImageView wyh_autoSetImageCornerRedius:13 ConrnerType:UIRectCornerAllCorners];
+            [cell.UserImageView sd_setImageWithURL:[videoModel.userPhoto mj_url] placeholderImage:K_APP_DEFAULT_USER_IMAGE];
+            [cell.UserImageView wyh_autoSetImageCornerRedius:14 ConrnerType:UIRectCornerAllCorners];
+            cell.NameLB.text = videoModel.userName;
+            cell.heardLB.text = [NSString stringWithFormat:@"%lD",(long)videoModel.heartCount];
+            return cell;
+        }
+    }
+    return nil;
+}
+-(void)collectionView:(UICollectionView *)collectionView didSelectItemAtIndexPath:(NSIndexPath *)indexPath{
+        if (self.totalArray && [self.totalArray count] > indexPath.row) {
+            id cellData;
+            Videos *videoModel;
+            Advertisements *adModel;
+            //MARK:广告
+            cellData = [_totalArray objectAtIndex:indexPath.row];
+            if ([cellData isKindOfClass:[Advertisements class]]){
+                adModel = (Advertisements *)cellData;
+                NSString *strUrl = adModel.url;
+                if ([[UIApplication sharedApplication] canOpenURL:[strUrl mj_url]]) {
+                    [[UIApplication sharedApplication] openURL:[strUrl mj_url] options:@{} completionHandler:nil];
+                }
+                else{
+                    ZWWLog(@"广告地址：%@",strUrl);
+                    [YJProgressHUD showInfo:@"确认地址是否正确"];
+                }
+            }
+            //MARK:内容
+            else{
+                videoModel = (Videos *)cellData;
+                NSString *strVid = [NSString stringWithFormat:@"%lD",(long)videoModel.videoId];
+                ZWMoviseDetailsVC *vc = [[ZWMoviseDetailsVC alloc] init];
+                vc.videoId = strVid.integerValue;
+                vc.indexPath = indexPath;
+                vc.delegate = (id<MoviesDetailsVCDelegate>)self;
+                vc.IsVerticalScreen = videoModel.IsVerticalScreen;
+                [Utils loadMoviesDetailsDataWithVId:strVid
+                                        abdCallback:^(id  _Nullable responseData, NSString * _Nullable strMsg) {
+                                            ZWWLog(@"=======%@",responseData)
+                                            if (responseData && [MovieDetailModel mj_objectWithKeyValues:responseData]) {
+                                                MovieDetailModel *_movieModel = [MovieDetailModel mj_objectWithKeyValues:responseData];
+                                                vc.movieModel = _movieModel;
+                                                vc.movieUrl = _movieModel.url;
+                                                vc.IsVerticalScreen = _movieModel.IsVerticalScreen;
+                                                //添加观看历史记录
+                                                [[FMDBUtils shareInstance] addHistoryMoves:_movieModel];
+                                            }
+                                            [[AppDelegate shareInstance].navigation pushViewController:vc animated:YES];
+                                        } andisLoading:YES];
+            }
+        }
+}
+-(NSInteger)numberOfItemsInPagerView:(TYCyclePagerView *)pageView {
+    if (self.tADData && [self.tADData count] > 0) {
+        NSInteger cont = [self.tADData count];
+        //循环播放
+        _topAdScrollView.isInfiniteLoop = cont > 1 ?YES:NO;
+        self.pageControl.numberOfPages = cont;
+        return cont;
+    }
+    self.pageControl.numberOfPages = 0;
+    return 0;
+}
+-(void)pagerView:(TYCyclePagerView *)pageView didScrollFromIndex:(NSInteger)fromIndex toIndex:(NSInteger)toIndex{
+    self.pageControl.currentPage = toIndex;
+}
+- (UICollectionViewCell *)pagerView:(TYCyclePagerView *)pagerView cellForItemAtIndex:(NSInteger)index{
+    UICollectionViewCell *cell = [pagerView dequeueReusableCellWithReuseIdentifier:k_collection_top_ad_identify forIndex:index];
+    //图片
+    NSInteger tag = 1123;
+    FLAnimatedImageView *fimg = (FLAnimatedImageView *)[cell.contentView viewWithTag:tag];
+    if (!fimg) {
+        fimg = [[FLAnimatedImageView alloc] init];
+        fimg.tag = tag;
+        [Utils imgNoTransformation:fimg];
+        [cell.contentView addSubview:fimg];
+        [fimg mas_makeConstraints:^(MASConstraintMaker *make) {
+            make.top.bottom.mas_equalTo(0);
+            make.left.right.mas_equalTo(0);
+            make.height.mas_equalTo(cycleScrollViewHeight);
+        }];
+    }
+    if (self.tADData && [self.tADData count] > index) {
+        Advertisements *model;
+        id _obj = self.tADData[index];
+        if (![_obj isKindOfClass:[Advertisements classForCoder]]) {
+            model = [Advertisements mj_objectWithKeyValues:_obj];
+        }
+        else
+            model = (Advertisements *)_obj;
+        NSString *strInfo = model.cover;
+        if ([strInfo hasPrefix:@"http"]) {
+            if ([strInfo hasSuffix:@"gif"]) {
+                fimg.image = K_APP_DEFAULT_IMAGE_BIG;
+                dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+                     [Utils loadGIFImage:strInfo AndFLAnimatedImageView:fimg];
+                });
+            }
+            else{
+                [fimg sd_setImageWithURL:[strInfo mj_url]
+                        placeholderImage:K_APP_DEFAULT_IMAGE_BIG];
+            }
+        }
+        else{
+            fimg.image = [UIImage imageNamed:strInfo];
+        }
+    }
+    return cell;
+}
+- (TYCyclePagerViewLayout *)layoutForPagerView:(TYCyclePagerView *)pageView{
+    TYCyclePagerViewLayout *layer = [[TYCyclePagerViewLayout alloc] init];
+    layer.itemSize = CGSizeMake(K_APP_WIDTH - 2 * cell_margin, cycleScrollViewHeight);
+    layer.itemSpacing = 0;
+    layer.sectionInset = UIEdgeInsetsMake(0, 0, 0, 0);
+    return layer;
+}
+-(void)pagerView:(TYCyclePagerView *)pageView didSelectedItemCell:(UICollectionViewCell *)cell atIndex:(NSInteger)index{
+    ZWWLog(@"顶部广告点击");
+    if (self.tADData && [self.tADData count] > index) {
+        Advertisements *model;
+        id _obj = self.tADData[index];
+        if (![_obj isKindOfClass:[Advertisements classForCoder]]) {
+            model = [Advertisements mj_objectWithKeyValues:_obj];
+        }
+        else
+            model = (Advertisements *)_obj;
+        NSString *strUrl = model.url;
+        if ([[UIApplication sharedApplication] canOpenURL:[strUrl mj_url]]) {
+            [[UIApplication sharedApplication] openURL:[strUrl mj_url] options:@{} completionHandler:nil];
+        }
+    }
+}
+//MARK: - WaterfallLayoutDelegate
+- (CGFloat)waterfallLayout:(WaterfallLayout *)waterfallLayout itemHeightForWidth:(CGFloat)itemWidth atIndexPath:(NSIndexPath *)indexPath{
+    id cellData;
+    CGFloat _h = 165;
+    CGFloat _w = (K_APP_WIDTH - 3 * cell_margin) * 0.5;//宽度不变
+    if (self.totalArray && [self.totalArray count] > indexPath.row) {
+        Videos *videoModel;
+        Advertisements *adModel;
+        cellData = [_totalArray objectAtIndex:indexPath.row];
+        if ([cellData isKindOfClass:[Advertisements class]]){
+            adModel = (Advertisements *)cellData;
+            _w = adModel.width;
+            _h = adModel.height;
+        }
+        else{
+            videoModel = (Videos *)cellData;
+            _w = videoModel.ItemWidth;
+            _h = videoModel.ItemHeight;
+        }
+    }
+    return _h ;
+}
+//MARK: - MoviesDetailsVCDelegate
+-(void)moviesDetailsHeartUpdateActionForValue:(NSInteger)_cvalue AndIndexPath:(NSIndexPath *)_indexPath{
+    if (self.totalArray && [self.totalArray count] > _indexPath.row) {
+        Videos *videoModel = (Videos *)self.totalArray[_indexPath.row];
+        videoModel.heartCount = _cvalue;
+        [self.collectionView reloadItemsAtIndexPaths:@[_indexPath]];
+    }
+}
+
+@end

@@ -1,0 +1,37 @@
+#import "MovieDetailsShareView.h"
+
+@implementation MovieDetailsShareView
+
++ (instancetype)movieDetailsShareViewInitXib{
+    NSArray *nibView = [[NSBundle mainBundle] loadNibNamed:NSStringFromClass([MovieDetailsShareView class])
+                                                     owner:self options:nil];
+    
+    return nibView.firstObject;
+}
+
+//微信点击
+-(IBAction)btnWXAction:(UIButton *)sender{
+    if (_shareTypeBlock) {
+        _shareTypeBlock(sender.tag);
+    }
+    NSLog(@"微信点击");
+}
+
+//QQ点击
+-(IBAction)btnQQAction:(UIButton *)sender{
+    if (_shareTypeBlock) {
+        _shareTypeBlock(sender.tag);
+    }
+    
+    NSLog(@"QQ点击");
+}
+
+//复制点击
+-(IBAction)btnCopyAction:(UIButton *)sender{
+    if (_shareTypeBlock) {
+        _shareTypeBlock(sender.tag);
+    }
+    NSLog(@"复制点击");
+}
+
+@end

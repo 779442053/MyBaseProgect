@@ -1,0 +1,297 @@
+//
+//  MySearchListViewController.m
+//  KuaiZhu
+//
+//  Created by step_zhang on 2019/11/12.
+//  Copyright © 2019 su. All rights reserved.
+//
+
+#import "MySearchListViewController.h"
+#import "ZWMoviseDetailsVC.h"
+
+#import "MovieDetailModel.h"
+#import "SearchModel.h"
+#import "FansModel.h"
+
+#import "ZWMainVideosCell.h"
+#import "VideosAdCell.h"
+#import "WaterfallLayout.h"
+
+
+@interface MySearchListViewController ()<UICollectionViewDelegate,UICollectionViewDataSource,UICollectionViewDelegateFlowLayout,WaterfallLayoutDelegate>
+{
+    NSString *_strLayouType;
+}
+@property(nonatomic, strong) WaterfallLayout *wlayout;    //瀑布流Layer
+@property(nonatomic, assign) BOOL hasNextPage;   //是否加载更多
+@property(nonatomic, assign) NSInteger pIndex;   //页码
+@property(nonatomic, assign) NSInteger  lastId;  //支持分段读取，传视频列表中的最后一个值
+@property(nonatomic, assign) NSInteger  lastAid; //支持分段读取，传广告列表中的最后一个值
+
+@property(nonatomic, strong) NSMutableArray *totalArray; //列表数据
+
+@property (nonatomic,strong) UIView *emptyView;
+
+@end
+
+@implementation MySearchListViewController
+
+static CGFloat const cell_margin = 3;
+static NSString * const newsCellIdentifier = @"ZWMainVideosCell";
+static NSString * const newsAdCellIdentifier = @"VideosAdCell";
+
+- (instancetype)initWithType:(NSString *)strType{
+    _strLayouType = strType;
+
+    if(self = [super initWithCollectionViewLayout:self.wlayout]){
+
+    }
+    return self;
+}
+- (void)viewDidLoad {
+    [super viewDidLoad];
+    // Do any additional setup after loading the view.
+
+    //初始化
+    [self initView];
+
+    //注册
+    [self registerClass];
+
+    //加载
+    [self loadRequestForAnimation:YES andIsRefresh:YES];
+
+}
+//MARK: - initView
+-(void)initView{
+    self.pIndex = 0;       //默认第一页
+    self.lastId = 0;
+    self.lastAid = 0;
+    self.hasNextPage = NO;
+
+    self.collectionView.delegate = self;
+    self.collectionView.dataSource = self;
+
+    self.collectionView.backgroundColor = [UIColor clearColor];
+    [self.collectionView addSubview:self.emptyView];
+    self.view.backgroundColor = [UIColor clearColor];
+
+    __weak typeof(self) weakSelf = self;
+    //MARK:下拉刷新
+    weakSelf.collectionView.mj_header = [MJRefreshNormalHeader headerWithRefreshingBlock:^{
+        [weakSelf loadRequestForAnimation:YES andIsRefresh:YES];
+    }];
+
+    //MARK:上拉加载更多
+    weakSelf.collectionView.mj_footer = [MJRefreshAutoNormalFooter footerWithRefreshingBlock:^{
+        [weakSelf loadRequestForAnimation:YES andIsRefresh:NO];
+    }];
+}
+//注册
+-(void)registerClass{
+    [self.collectionView registerNib:[UINib nibWithNibName:@"ZWMainVideosCell" bundle:nil] forCellWithReuseIdentifier:newsCellIdentifier];
+    [self.collectionView registerNib:[UINib nibWithNibName:@"VideosAdCell" bundle:nil] forCellWithReuseIdentifier:newsAdCellIdentifier];
+}
+-(void)loadRequestForAnimation:(BOOL)animation andIsRefresh:(BOOL)refresh{
+    NSString *strUrl = [NSString stringWithFormat:@"%@SearchVideos",K_APP_HOST];
+    NSDictionary *dicParmas = @{
+                                @"id":@"0",
+                                @"key" : self.strKeyWord,
+                                @"short":@"1"
+                                };
+    if ([_strLayouType isEqualToString:@"用户"]) {
+        strUrl = [NSString stringWithFormat:@"%@Users",K_APP_HOST];
+        dicParmas = @{
+                      @"id":@"0",
+                      @"key" : self.strKeyWord,
+                      };
+    }
+
+    //__weak typeof(self) weakSelf = self;
+    __block typeof(self) blockSelf = self;
+    [Utils getRequestForServerData:strUrl
+                    withParameters:dicParmas
+                AndHTTPHeaderField:nil
+                    AndSuccessBack:^(id _responseData) {
+                        if (_responseData) {
+                            [self stoploadingAnimationForMore:YES];
+                            if ([self->_strLayouType isEqualToString:@"用户"]) {
+                                FansModel *model = [FansModel mj_objectWithKeyValues:_responseData];
+                                blockSelf.totalArray = [NSMutableArray arrayWithArray:model.data];
+                            }
+                            else{
+                                SearchModel *model = [SearchModel mj_objectWithKeyValues:_responseData];
+                                blockSelf.totalArray = [NSMutableArray arrayWithArray:model.videos];
+                            }
+                        }
+                        [self stoploadingAnimationForMore:NO];
+                    } AndFailureBack:^(NSString *_strError) {
+                        ZWWLog(@"视频搜索异常！详见：%@",_strError);
+                        [YJProgressHUD showError:_strError];
+                        [self stoploadingAnimationForMore:YES];
+                    } WithisLoading:YES];
+}
+- (void)stoploadingAnimationForMore:(BOOL)loadMore{
+    dispatch_async(dispatch_get_main_queue(), ^{
+        //结束刷新
+        [self.collectionView reloadData];
+        if(loadMore) {
+            if (!self.hasNextPage) {
+                [self.collectionView.mj_footer endRefreshingWithNoMoreData];
+            }
+            else{
+                [self.collectionView.mj_footer endRefreshing];
+                [self.collectionView.mj_footer resetNoMoreData];
+            }
+        }
+        else{
+            [self.collectionView.mj_header endRefreshing];
+            [self.collectionView.mj_footer resetNoMoreData];
+            if (!self.hasNextPage) {
+                [self.collectionView.mj_footer endRefreshingWithNoMoreData];
+            }
+        }
+    });
+}
+- (CGFloat)waterfallLayout:(WaterfallLayout *)waterfallLayout itemHeightForWidth:(CGFloat)itemWidth atIndexPath:(NSIndexPath *)indexPath{
+    id cellData;
+    CGFloat _h = 165;
+    CGFloat _w = (K_APP_WIDTH - 3 * cell_margin) * 0.5;
+    if (self.totalArray && [self.totalArray count] > indexPath.row) {
+        SearchData *videoModel;
+        cellData = [_totalArray objectAtIndex:indexPath.row];
+        videoModel = (SearchData *)cellData;
+        _w = videoModel.ItemWidth;
+        _h = videoModel.ItemHeight;
+    }
+    return _h;
+}
+//MARK: - UICollectionViewDelegate、UICollectionViewDataSource
+-(NSInteger)numberOfSectionsInCollectionView:(UICollectionView *)collectionView{
+    return 1;
+}
+//MARK:头尾视图
+-(CGSize)collectionView:(UICollectionView *)collectionView layout:(UICollectionViewLayout *)collectionViewLayout referenceSizeForHeaderInSection:(NSInteger)section{
+    return CGSizeZero;
+}
+-(CGSize)collectionView:(UICollectionView *)collectionView layout:(UICollectionViewLayout *)collectionViewLayout referenceSizeForFooterInSection:(NSInteger)section{
+    return CGSizeZero;
+}
+//MARK:列
+-(NSInteger)collectionView:(UICollectionView *)collectionView numberOfItemsInSection:(NSInteger)section{
+    if (self.totalArray && [self.totalArray count] > 0) {
+        [self.emptyView setHidden:YES];
+        return [self.totalArray count];
+    }
+    [self.emptyView setHidden:NO];
+    return 0;
+}
+- (UICollectionViewCell *)collectionView:(UICollectionView *)collectionView cellForItemAtIndexPath:(NSIndexPath *)indexPath{
+    NSString *cover;
+    ZWMainVideosCell *cell = [collectionView dequeueReusableCellWithReuseIdentifier:newsCellIdentifier forIndexPath:indexPath];
+    if (self.totalArray && [self.totalArray count] > indexPath.row) {
+        id cellData;
+        SearchData *videoModel;
+        cellData = [_totalArray objectAtIndex:indexPath.row];
+        videoModel = (SearchData *)cellData;
+        NSString *strUserPic;
+        NSString *strUserName;
+        NSString *strHeart;
+        cell.DesLb.text = @"";
+        cover = videoModel.cover;
+        cell.DesLb.text = videoModel.title;
+        strUserPic = videoModel.userPhoto;
+        strUserName = videoModel.userName;
+        strHeart = [NSString stringWithFormat:@"%lD",(long)videoModel.heartCount];
+        cover = [cover stringByReplacingOccurrencesOfString:@"\\" withString:@"/"];
+        if (videoModel.IsVerticalScreen) {
+            [cell.BgImageView sd_setImageWithURL:[cover mj_url] placeholderImage:K_APP_DEFAULT_IMAGE_BIG];
+        }else{
+            [cell.BgImageView sd_setImageWithURL:[cover mj_url] placeholderImage:K_APP_DEFAULT_IMAGE_SMALL];
+        }
+        [cell.UserImageView sd_setImageWithURL:[strUserPic mj_url] placeholderImage:K_APP_DEFAULT_USER_IMAGE];
+        [cell.UserImageView wyh_autoSetImageCornerRedius:14 ConrnerType:UIRectCornerAllCorners];
+        cell.NameLB.text = strUserName;
+        cell.heardLB.text = strHeart;
+    }
+    return cell;
+}
+-(void)collectionView:(UICollectionView *)collectionView didSelectItemAtIndexPath:(NSIndexPath *)indexPath{//将这一步,放在详情界面,进行加载.没有登录.仍然可以播放.进行详细操作时候,再强制登录
+    if (self.totalArray && [self.totalArray count] > indexPath.row) {
+        id cellData;
+        //MARK:广告
+        cellData = [_totalArray objectAtIndex:indexPath.row];
+        if ([cellData isKindOfClass:[SearchData class]]){
+            SearchData *videoModel = (SearchData *)cellData;
+            NSString *strVid;
+            strVid = [NSString stringWithFormat:@"%lD",(long)videoModel.videoId];
+            __weak typeof(self) weakSelf = self;
+            [Utils loadMoviesDetailsDataWithVId:strVid
+                                    abdCallback:^(id  _Nullable responseData, NSString * _Nullable strMsg) {
+                                        ZWMoviseDetailsVC *vc = [[ZWMoviseDetailsVC alloc] init];
+                                        vc.videoId = strVid.integerValue;
+                                        vc.indexPath = indexPath;
+                                        vc.delegate = (id<MoviesDetailsVCDelegate>)weakSelf;
+                                        if (responseData && [MovieDetailModel mj_objectWithKeyValues:responseData]) {
+                                            MovieDetailModel *_movieModel = [MovieDetailModel mj_objectWithKeyValues:responseData];
+                                            vc.movieModel = _movieModel;
+                                            vc.movieUrl = _movieModel.url;
+                                            vc.IsVerticalScreen = _movieModel.IsVerticalScreen;
+                                            //添加观看历史记录
+                                            [[FMDBUtils shareInstance] addHistoryMoves:_movieModel];
+                                        }
+                                        [[AppDelegate shareInstance].navigation pushViewController:vc animated:YES];
+                                    } andisLoading:YES];
+        }
+    }
+}
+//MARK: - lazy load
+-(WaterfallLayout *)wlayout{
+    if (!_wlayout) {
+        _wlayout = [WaterfallLayout waterFallLayoutWithColumnCount:2];
+        _wlayout.headerReferenceSize = CGSizeZero;
+
+        [_wlayout setColumnSpacing:cell_margin
+                        rowSpacing:cell_margin
+                      sectionInset:UIEdgeInsetsMake(0, cell_margin, cell_margin, cell_margin)];
+        _wlayout.delegate = self;
+    }
+    return _wlayout;
+}
+
+-(UIView *)emptyView{
+    if (!_emptyView) {
+        CGFloat h = 150;
+        CGFloat y = (K_APP_HEIGHT - K_APP_TABBAR_HEIGHT - K_APP_NAVIGATION_BAR_HEIGHT - h) * 0.5;
+        CGFloat w = 100;
+        CGFloat x = (K_APP_WIDTH - w) * 0.5;
+        _emptyView = [[UIView alloc] initWithFrame:CGRectMake(x, y, w, h)];
+
+        //MARK:图片
+        w = 85;
+        h = 103;
+        x = (_emptyView.frame.size.width - w) * 0.5;
+        CGRect rect = CGRectMake(x, 0, w, h);
+        UIImageView *imgBg = [BaseUIView createImage:rect
+                                            AndImage:[UIImage imageNamed:@"search_empty_img.png"] AndBackgroundColor:nil WithisRadius:NO];
+        [_emptyView addSubview:imgBg];
+
+        //MARK:标题
+        h = 21;
+        w = _emptyView.frame.size.width;
+        x = 0;
+        y = _emptyView.frame.size.height - h - 20;
+        UILabel *labInfo = [BaseUIView createLable:CGRectMake(x, y, w, h)
+                                           AndText:@"暂无数据显示"
+                                      AndTextColor:K_APP_TINT_COLOR
+                                        AndTxtFont:[UIFont systemFontOfSize:16]
+                                AndBackgroundColor:nil];
+        labInfo.textAlignment = NSTextAlignmentCenter;
+        [_emptyView addSubview:labInfo];
+
+        //默认隐藏
+        [_emptyView setHidden:YES];
+    }
+    return _emptyView;
+}
+@end

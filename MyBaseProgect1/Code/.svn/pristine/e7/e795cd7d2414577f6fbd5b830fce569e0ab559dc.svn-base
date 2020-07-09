@@ -1,0 +1,28 @@
+//
+//  FansViewController.h
+//  KuaiZhu
+//
+//  Created by apple on 2019/5/27.
+//  Copyright © 2019 su. All rights reserved.
+//
+
+#import <UIKit/UIKit.h>
+
+NS_ASSUME_NONNULL_BEGIN
+
+/** Ta的粉丝、关注 */
+@interface FansViewController : BaseViewController
+
+//信息列表
+@property(nonatomic, strong, nullable) MLMSegmentScroll *segScroll;
+
+-(instancetype)initWithUser:(NSString *)strUser AndTitle:(NSString *)strTitle;
+-(void)updateControllerWithUser:(NSString *)strUser AndTitle:(NSString *)strTitle;
+
+-(NSString *)getUserId;
+
++(instancetype)shareInstance;
+
+@end
+
+NS_ASSUME_NONNULL_END

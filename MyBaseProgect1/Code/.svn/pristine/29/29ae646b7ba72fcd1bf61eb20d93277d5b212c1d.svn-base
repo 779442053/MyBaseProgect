@@ -1,0 +1,28 @@
+//
+//  FansModel.m
+//  快猪
+//
+//  Created by 魏冰杰 on 2019/1/16.
+//  Copyright © 2019年 时磊. All rights reserved.
+//
+
+#import "FansModel.h"
+
+@implementation FansModel
++ (NSDictionary *)mj_objectClassInArray{
+    return @{
+             @"data" : [FansData class]
+             };
+}
+
+@end
+
+@implementation FansData
+
++ (NSDictionary *)mj_replacedKeyFromPropertyName{
+    return @{
+             @"fansId" : @"id"
+             };
+}
+
+@end

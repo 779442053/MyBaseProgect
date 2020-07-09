@@ -1,0 +1,143 @@
+//
+
+
+#import "SearchVC.h"
+#import "SearchInfoVC.h"
+
+@interface SearchVC ()<UITextFieldDelegate>
+
+@property (nonatomic, strong) UITextField *searchField;
+
+@property (nonatomic, strong) UIButton *searchBtn;
+//@property(nonatomic,strong) UIImageView *backImg;
+@end
+
+@implementation SearchVC
+
+- (void)viewDidLoad {
+    [super viewDidLoad];
+    [self setBackgroundColor];
+    //[self.view addSubview:self.backImg];
+    float w = K_APP_WIDTH - 80;
+    float h = 21;
+    float y = (44 - h) * 0.5 + ([[UIDevice currentDevice] isiPhoneX]?K_APP_IPHONX_TOP:20);
+    float x = (K_APP_WIDTH - w) / 2.f;
+    UILabel *labPageTitle = [BaseUIView createLable:CGRectMake(x, y, w, h)
+                                            AndText:@"搜索"
+                                       AndTextColor:[UIColor whiteColor]
+                                         AndTxtFont:[UIFont systemFontOfSize:24]
+                                 AndBackgroundColor:nil];
+    labPageTitle.textAlignment = NSTextAlignmentCenter;
+    labPageTitle.textColor = [UIColor whiteColor];
+    labPageTitle.adjustsFontSizeToFitWidth = YES;
+    [self.view addSubview:labPageTitle];
+
+    UIButton *BackBTN = [BaseUIView createBtn:CGRectMake(x, y, w, h) AndTitle:nil AndTitleColor:nil AndTxtFont:nil AndImage:nil AndbackgroundColor:nil AndBorderColor:nil AndCornerRadius:0 WithIsRadius:NO WithBackgroundImage:[UIImage imageNamed:@"backBtnWhite"] WithBorderWidth:0];
+    BackBTN.frame = CGRectMake(37,(44 - h) * 0.5 + ([[UIDevice currentDevice] isiPhoneX]?K_APP_IPHONX_TOP:20), 30, 30);
+    [BackBTN addTarget:self action:@selector(BackBtnClick) forControlEvents:UIControlEventTouchUpInside];
+    [self.view addSubview:BackBTN];
+
+
+    
+    [self.view addSubview:self.searchField];
+    [self.searchField mas_makeConstraints:^(MASConstraintMaker *make) {
+        make.top.mas_equalTo(K_APP_NAVIGATION_BAR_HEIGHT + 20);
+        make.right.mas_equalTo(-15);
+        make.left.mas_equalTo(15);
+        make.height.mas_equalTo(40);
+    }];
+    
+    [self.view addSubview:self.searchBtn];
+    [self.searchBtn mas_makeConstraints:^(MASConstraintMaker *make) {
+        make.top.equalTo(self.searchField.mas_bottom).offset(30);
+        make.centerX.equalTo(self.view);
+        make.left.mas_equalTo(70);
+        make.right.mas_equalTo(-70);
+        make.height.mas_equalTo(46);
+    }];
+    
+}
+-(void)BackBtnClick{
+    [self.navigationController popViewControllerAnimated:YES];
+}
+//-(UIImageView *)backImg{
+//    if (!_backImg) {
+//        _backImg = [BaseUIView createImage:UIScreen.mainScreen.bounds
+//                                  AndImage:[UIImage imageNamed:@"login_bg"]
+//                        AndBackgroundColor:nil
+//                              WithisRadius:NO];
+//    }
+//    return _backImg;
+//}
+- (void)viewWillAppear:(BOOL)animated {
+    [super viewWillAppear:animated];
+    [self.navigationController setNavigationBarHidden:NO animated:NO];
+    
+}
+
+- (void)didReceiveMemoryWarning {
+    [super didReceiveMemoryWarning];
+    // Dispose of any resources that can be recreated.
+}
+
+- (void)searchMovies{
+    if (self.searchField.text == nil
+        || self.searchField.text.length == 0) {
+        [YJProgressHUD showError:@"请输入关键字"];
+    } else {
+        SearchInfoVC *vc = [[SearchInfoVC alloc] init];
+        vc.keyWordStr = self.searchField.text;
+        [self.navigationController pushViewController:vc animated:YES];
+    }
+}
+
+
+//MARK: - lazyload
+- (UITextField *)searchField
+{
+    if (!_searchField) {
+        _searchField = [UITextField new];
+        _searchField.backgroundColor = THEMECOLOR;
+        _searchField.borderStyle = UITextBorderStyleRoundedRect;
+        _searchField.textColor = [UIColor colorWithHexString:@"#999999"];
+        _searchField.placeholder = @"输入关键字";
+        _searchField.returnKeyType = UIReturnKeySearch;
+        
+        _searchField.delegate = self;
+        
+        [_searchField setPlaceholderColor:[UIColor colorWithHexString:@"#999999"]];
+    }
+    return _searchField;
+}
+
+- (UIButton *)searchBtn{
+    if (!_searchBtn) {
+        _searchBtn = [UIButton buttonWithType:UIButtonTypeCustom];
+        [_searchBtn setBackgroundImage:[UIImage imageNamed:@"搜索"] forState:UIControlStateNormal];
+        [_searchBtn addTarget:self action:@selector(searchMovies) forControlEvents:UIControlEventTouchUpInside];
+    }
+    return _searchBtn;
+}
+
+
+//MARK: - UITextFieldDelegate
+-(BOOL)textField:(UITextField *)textField shouldChangeCharactersInRange:(NSRange)range replacementString:(NSString *)string{
+    // [S] 禁止用户切换键盘为Emoji表情
+    if (textField.isFirstResponder) {
+        if ([textField.textInputMode.primaryLanguage isEqual:@"emoji"] || textField.textInputMode.primaryLanguage == nil) {
+            return NO;
+        }
+    }
+    // [E] 禁止用户切换键盘为Emoji表情
+    
+    //NSUInteger length = textField.text.length;
+    //NSUInteger strLength = string.length;
+    
+    //回车登录
+    if ([string isEqualToString:@"\n"]) {
+        [self searchMovies];
+    }
+    
+    return YES;
+}
+@end

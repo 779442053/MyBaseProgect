@@ -1,0 +1,16 @@
+//
+//  ChangePwdVC.h
+//  快猪
+//
+//  Created by layne on 2018/5/14.
+//  Copyright © 2018年 时磊. All rights reserved.
+//
+
+#import <UIKit/UIKit.h>
+
+/**
+ * 修改密码
+ */
+@interface ChangePwdVC : BaseViewController
+
+@end

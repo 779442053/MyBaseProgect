@@ -1,0 +1,16 @@
+//
+//  InfosModel.m
+//  快猪
+//
+//  Created by layne on 2018/6/29.
+//  Copyright © 2018年 时磊. All rights reserved.
+//
+
+#import "InfosModel.h"
+
+@implementation InfosModel
+
++ (NSDictionary *)mj_replacedKeyFromPropertyName{
+ return @{@"userId" : @"id"};
+}
+@end

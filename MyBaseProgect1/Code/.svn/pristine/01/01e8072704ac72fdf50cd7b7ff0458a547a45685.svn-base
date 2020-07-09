@@ -1,0 +1,89 @@
+//
+//  UITextField+MyCategory.h
+//  快猪
+//
+//  Created by layne on 2018/5/12.
+//  Copyright © 2018年 时磊. All rights reserved.
+//
+
+#import <UIKit/UIKit.h>
+
+#define FieldPlaceholderColorKeyPath @"_placeholderLabel.textColor"
+
+@interface UITextField (LayneCategory)
+
+/**
+ 设置占位符字体颜色
+ 
+ @param placeholderColor 颜色
+ */
+- (void)setPlaceholderColor:(UIColor *)placeholderColor;
+
+
+/**
+ 设置做左边距
+ 
+ @param leftSpace 边距距离
+ */
+- (void)setLeftSpace:(CGFloat )leftSpace;
+
+
+
+/**
+ 设置左侧标题
+ 
+ @param leftText    标题文字
+ */
+- (void)setLeftTitle:(NSString *)leftText;
+
+/**
+ 设置textField左侧标题
+ 
+ @param leftText 标题文字
+ @param font 文字字体
+ @param textColor 文字颜色
+ */
+- (void)setLeftTitle:(NSString *)leftText withFont:(UIFont *)font textColor:(UIColor *)textColor;
+
+
+/**
+ 设置textField右侧标题
+ 
+ @param rightTitle 标题
+ */
+- (void)setRightTitle:(NSString *)rightTitle;
+
+/**
+ 设置textField右侧标题
+ 
+ @param rightText 文字
+ @param font 字体
+ @param textColor 颜色
+ */
+- (void)setRightTitle:(NSString *)rightText withFont:(UIFont *)font textColor:(UIColor *)textColor;
+
+/**
+ 下方绘制一条高度为1，灰色的线条
+ */
+- (void)setDefaultBottomLine;
+
+/**
+ 
+ 下方绘制一条线条
+ @param lineColor 线条颜色
+ @param height 线条高度
+ */
+- (void)setBottomLineWithColor:(UIColor *)lineColor height:(CGFloat)height;
+
+
+/**
+ 设置左侧icon图标
+ 
+ @param iconName 图标名称
+ @param imageSize 图标尺寸
+ @param viewModel 显示模式
+ */
+- (void)setLeftIcon:(NSString *)iconName iamgeSize:(CGSize )imageSize leftViewMode:(UITextFieldViewMode )viewModel;
+
+
+@end

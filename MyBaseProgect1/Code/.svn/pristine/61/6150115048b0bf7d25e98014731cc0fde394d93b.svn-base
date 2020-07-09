@@ -1,0 +1,27 @@
+//
+//  MyFollowModel.m
+//  快猪
+//
+//  Created by layne on 2018/6/28.
+//  Copyright © 2018年 时磊. All rights reserved.
+//
+
+#import "MyFollowModel.h"
+
+@implementation MyFollowModel
+
++ (NSDictionary *)mj_objectClassInArray{
+    return @{
+             @"data" : [FollowArr class]
+             };
+}
+
+@end
+
+@implementation FollowArr
+
++ (NSDictionary *)mj_replacedKeyFromPropertyName{
+    return @{@"userId" : @"id"};
+}
+
+@end
